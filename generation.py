@@ -60,8 +60,21 @@ def generate_points_sets(n):
     return stack_point_sets((P, Q)) #list(zip(P, Q))
 
 import pandas as pd
+from SetsClustering.Utils import createFlowerDataset, to_array
 
-def generate_colored_points_sets(n, m):
+def generate_colored_points_sets(n, m, r=1, is_colored=True):
+    
+    set_P = createFlowerDataset(r=r, n = n - 90, m=m)
+    #set_P_indiced = [(P, idx) for (idx, P) in enumerate(set_P)] 
+    P, w = to_array(set_P)
+    n, m, d = P.shape
+    colors = np.zeros((n, m, 1))
+    for i in range(m):
+        colors[:, i, 0] = i if is_colored else 0
+    P = np.concatenate((P, colors), axis=-1)
+    return np.unique(np.around(P, 5), axis=0)
+    
+    '''
     LOAD_3D_MODEL = False
     if LOAD_3D_MODEL:
         # Real 3d 
@@ -103,7 +116,8 @@ def generate_colored_points_sets(n, m):
                            for i in range(m)]
         colored_points = [color_the_points(P, color) 
                           for color, P in enumerate(point_groups)]
-    return stack_point_sets(colored_points)
+    '''
+    #return stack_point_sets(colored_points)
 
 
 def generate_set_of_lines_new(n, offset=np.zeros((1, 2))):

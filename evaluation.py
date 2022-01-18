@@ -215,7 +215,7 @@ def get_coreset_lines(n, m, k):
 
 from text import load_text_data
 
-def get_coreset_points(n, m, k, USE_TEXT):
+def get_coreset_points(n, m, k, USE_TEXT, r=1, is_colored=True):
     #USE_TEXT = False #(m==3)
     if USE_TEXT:
         #assert(m==3) # for text data
@@ -232,7 +232,7 @@ def get_coreset_points(n, m, k, USE_TEXT):
         else:
             assert False, "Incorrect m: {}".format(m)
     else:
-        P = generate_colored_points_sets(n, m)
+        P = generate_colored_points_sets(n, m, r, is_colored)
     sensitivities = coreset(P, k, f_dense=CS_dense)
     return P, sensitivities
 
@@ -315,7 +315,7 @@ from kmedians import kmedians, centroids_set_init
 P_queries = []
 def evaluate_colored_points(L, sensitivities, size, k, n_samples, sample_f):
     global P_queries
-    DO_K_MEDIANS = False
+    DO_K_MEDIANS = True
     if DO_K_MEDIANS:
         DO_COMPLETE_RANDOM = False
         #n_samples = 5
@@ -365,11 +365,11 @@ def evaluate_colored_points(L, sensitivities, size, k, n_samples, sample_f):
             p_rnd = np.hstack((coordinates_rnd, color_rnd))
             #p_rnd = np.hstack((x_rnd, y_rnd, color_rnd))
         else:
-            if n_samples < len(P_queries):
-                idx = np.random.randint(len(P_queries))
-                p_rnd = np.asarray(P_queries[idx])
-            else:
-                p_rnd = P_queries
+            #if n_samples < len(P_queries):
+            idx = np.random.randint(len(P_queries))
+            p_rnd = np.asarray(P_queries[idx])
+            #else:
+            #    p_rnd = P_queries
         cost = cost_set_to_points(L, np.ones(len(L)), p_rnd,
                                   dist_f=dist_colored_points_min_set_to_set)
         cost_coreset = cost_set_to_points(Lm, Wm, p_rnd,
@@ -402,7 +402,7 @@ def plot_mu_sigma(x, mus, sigmas, color, label, n_samples):
                      mus + sigmas / sqrt_n, 
                      alpha = 0.1, color=color)
 
-def plot_graphs(epsilons, n, m, k, n_samples, do_lines, use_text):
+def plot_graphs(epsilons, n, m, k, n_samples, do_lines, use_text, r, is_colored):
     (sizes, epsilon_mus, epsilon_sigmas,
      epsilon_mus_biased, epsilon_sigmas_biased,
      epsilon_random_mus, epsilon_random_sigmas) = map(
@@ -414,7 +414,7 @@ def plot_graphs(epsilons, n, m, k, n_samples, do_lines, use_text):
     plot_mu_sigma(sizes, epsilon_mus_biased, epsilon_sigmas_biased, 
                   colors[3], "Coreset (biased)", n_samples)
     plot_mu_sigma(sizes, epsilon_mus, epsilon_sigmas, 
-                  colors[0], "Coreset (theoretical)", n_samples)
+                  colors[0], "Coreset", n_samples)
     plot_mu_sigma(sizes, epsilon_random_mus, epsilon_random_sigmas, 
                   colors[1], "Uniform sampling", n_samples)
     plt.plot(sizes, np.zeros_like(sizes), label="Full data",

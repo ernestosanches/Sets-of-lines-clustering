@@ -56,8 +56,6 @@ def kmedians(P, k, epsilon = 0.01, delta=1/20.0,
         prev_cost = curr_cost
         groups = find_assignment(centroids)
         curr_cost, centroids = find_centroids(groups, centroids)
-        print("KMedians iteration: {}, cost: {}, group sizes: {}".format(
-            iteration, curr_cost, [len(g) for g in groups]))
         
         iteration += 1
         '''
@@ -68,6 +66,8 @@ def kmedians(P, k, epsilon = 0.01, delta=1/20.0,
         draw_centroids_f(np.asarray(centroids), s=500)
         plt.pause(0.05)
         '''
+    print("KMedians iterations: {}, cost: {}, group sizes: {}".format(
+        iteration, curr_cost, [len(g) for g in groups]))
     return curr_cost, centroids
    
 def centroids_set_init(P, k):

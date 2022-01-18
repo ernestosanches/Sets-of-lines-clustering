@@ -87,6 +87,10 @@ def from_tuple(P_tuple):
     shape = P_tuple[-1]
     return np.asarray(data).reshape(shape)
    
+def isin_all(A, B):
+    PRECISION = 5 # digits
+    return np.isin(np.around(A, PRECISION), 
+                   np.around(B, PRECISION)).all()
 
 ''' 
     Main algorithms from the paper "Sets of lines clustering"
@@ -112,8 +116,8 @@ def CS_dense(P, k, m_CS=2, tau=1/20., k_closest=2):
                 P_prev_hat, [b], (1 - tau) / 4 * k)
                 
             P_prev = np.asarray([
-                P for P in P_prev if np.isin(
-                    proj_hat_colored_point(P, B_prev), P_hat_closest).all()])
+                P for P in P_prev if isin_all(
+                    proj_hat_colored_point(P, B_prev), P_hat_closest)])
                                  
             #                     if set_in_setofsets(
             #                             proj_hat_colored_point(P, B_prev), 
@@ -166,8 +170,8 @@ def LS_dense(L, k, k_closest=None):
         
                
         L_prev = np.asarray([
-            L for L in L_prev if np.isin(
-                proj_hat_line(L, B_prev), L_hat_closest).all()])
+            L for L in L_prev if isin_all(
+                proj_hat_line(L, B_prev), L_hat_closest)])
                                  
         #                     if set_in_setofsets(
         #                             proj_hat_colored_point(P, B_prev), 
@@ -224,22 +228,24 @@ def coreset(L, k, f_dense=LS_dense,
     while not stopCondition: #len(L_0) > b:
         L_m_plus_one, B_m_plus_one = f_dense(L_0, k)
         currSize = len(L_m_plus_one)
-        stopCondition = currSize > prevSize or currSize <= b
+        stopCondition = currSize > prevSize * 2 or currSize <= b
         if not stopCondition:
             for L_set in L_m_plus_one:
                 s[hash_to_f(L_set)] = b / currSize
             L_0 = [L_set for L_set in L_0 
-                   if not np.isin(L_set, L_m_plus_one).all()] # subtract sets
-            print("Coreset: len(L_m_plus_one) = {}, len(L_0) = {}; b = {}".format(
-                  currSize, len(L_0), b))
+                   if not isin_all(L_set, L_m_plus_one)] # subtract sets
+            print("Coreset: len(L_m_plus_one) = {}, len(L_0) = {}; b = {}, s = {}, s+l = {}".format(
+                  currSize, len(L_0), b, len(s), len(s) + len(L_0)))
             stopCondition = (len(L_0) <= b)
             prevSize = currSize
-    for L_set in L_0:
-        s[hash_to_f(L_set)] = 1.0
+    for L_set in L:
+        L_hash = hash_to_f(L_set)
+        if not L_hash in s:
+            s[L_hash] = 1.0
     lines, sensitivities = zip(*s.items())
     lines = np.asarray([hash_from_f(line) for line in lines])
     
-        
+    print("s:", len(L), len(s))    
     sensitivities = np.asarray([s[hash_to_f(L_set)] for L_set in L])
 
     '''
@@ -276,7 +282,7 @@ def coreset_sample_biased(L, sensitivities, size):
     
     coreset = np.concatenate((coreset, coreset_additional))
     weights = np.concatenate((weights, weights_additional))
-    return coreset, weights * len(L) / weights.sum()
+    return coreset, weights #* len(L) / weights.sum()
     
 
 def coreset_sample(L, sensitivities, size):
@@ -292,5 +298,5 @@ def coreset_sample(L, sensitivities, size):
     coreset = L[M_idx]
     weights = 1 / (size * p_sampling[M_idx])
 
-    return coreset, weights * len(L) / weights.sum()
+    return coreset, weights #* len(L) / weights.sum()
     

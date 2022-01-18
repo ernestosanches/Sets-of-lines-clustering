@@ -39,16 +39,17 @@ def test_intermediate():
     test_ls_dense(Lm, Bm)  
     '''
     
-def get_coreset(n, m, k, do_lines, use_text):
+def get_coreset(n, m, k, do_lines, use_text, r=1, is_colored=True):
     print("Getting coreset")
     if do_lines:
         L, sensitivities = get_coreset_lines(n, m, k)
         evaluate_f = evaluate_lines
     else:
-        L, sensitivities = get_coreset_points(n, m, k, use_text)
+        L, sensitivities = get_coreset_points(n, m, k, use_text, r, is_colored)
         evaluate_f = evaluate_colored_points
     pickle.dump((L, sensitivities), open(
-        "results/coreset_{}_{}_{}_{}.p".format(n, m, k, int(do_lines)), "wb"))
+        "results/coreset_{}_{}_{}_{}_{}_{}.p".format(n, m, k, int(do_lines),
+                                                     r, int(is_colored)), "wb"))
     return L, sensitivities, evaluate_f
 
 
@@ -66,13 +67,13 @@ def do_test_coreset(L, sensitivities, do_lines, sizes):
     return result, result_random
 
 def evaluate_coreset(L, k, sensitivities, evaluate_f, sizes, 
-                     do_lines, use_text):
+                     do_lines, use_text, r, is_colored):
     global epsilons
     print("Evaluating coreset")
     n, m = len(L), len(L[0])
     epsilons = []
     epsilons_all = []
-    n_samples = 100#15**2#15**2
+    n_samples = 30#15**2#15**2
     for size in sizes:
         print("Evaluating coreset of size:", size)
         epsilon_all, epsilon_mu, epsilon_sigma = evaluate_f(
@@ -91,7 +92,7 @@ def evaluate_coreset(L, k, sensitivities, evaluate_f, sizes,
     pickle.dump(epsilons, open(
         "results/epsilons_{}_{}_{}_{}_{}_{}.p".format(
             n, m, k, int(do_lines), use_text, ctime()), "wb"))
-    plot_graphs(epsilons, n, m, k, n_samples, do_lines, use_text)
+    plot_graphs(epsilons, n, m, k, n_samples, do_lines, use_text, r, is_colored)
 
 
 def run_coreset_points(n, m, k, sizes):
@@ -100,11 +101,12 @@ def run_coreset_points(n, m, k, sizes):
     pass
 
 
-def run_coreset_set_of_sets(n, m, k, sizes, do_lines, use_text):
+def run_coreset_set_of_sets(n, m, k, sizes, do_lines, use_text, r=1, is_colored=True):
     global L, sensitivities, evaluate_f
     ''' Coreset on sets of colored points or lines '''
     # calculating the coreset
-    L, sensitivities, evaluate_f = get_coreset(n, m, k, do_lines, use_text)
+    L, sensitivities, evaluate_f = get_coreset(n, m, k, do_lines, use_text,
+                                               r, is_colored)
     '''
     import pickle
     L, sensitivities = pickle.load(open("data_1.p", "rb"))
@@ -113,7 +115,8 @@ def run_coreset_set_of_sets(n, m, k, sizes, do_lines, use_text):
     # uncomment for coreset visualization
     #result, result_random = do_test_coreset(L, sensitivities, do_lines, sizes)
     # evaluating the coreset and plotting comparison graph
-    evaluate_coreset(L, k, sensitivities, evaluate_f, sizes, do_lines, use_text)
+    evaluate_coreset(L, k, sensitivities, evaluate_f, sizes, do_lines, use_text,
+                     r, is_colored)
 
 from time import ctime
 
@@ -130,15 +133,18 @@ if __name__ == "__main__":
         mkdir("results")
 
     # parameters
-    n = 1000
-    
+    n = 10000
+    comment = ""#"r = 1e6, no colors"
     m = 1
     k = 1
-    do_lines = False
+    r = 1e6
+    is_colored = True
+    do_lines = True
     use_text = False
     
-    print("n = {}, m = {}, k = {}, lines = {}, text = {}".format(
-        n, m, k, do_lines, use_text))
+    print("n = {}, m = {}, k = {}, lines = {}, text = {}, r = {}, is_colored = {}".format(
+        n, m, k, do_lines, use_text, r, is_colored))
+    print(comment)
     '''
     sizes = [x for x in [2, 5, 10, 20, 40, 80, 160,
                          320,
@@ -151,7 +157,10 @@ if __name__ == "__main__":
                          #n - 1
                          ]   if x < n]
     '''
-    sizes = [int(2**i) for i in np.arange(5, int(np.log2(n)) + 1, 0.5)]
+    #sizes = [int(2**i) for i in np.arange(5, int(np.log2(n)), 0.5)]
+    sizes = np.logspace(1, 3, 10, dtype=int)
+    sizes = sizes[sizes < n]
+
     ''' Basic and intermediate algorithms testing 
         Commented out because of focusing on final coreset recently '''
     #test_basic()
@@ -161,7 +170,7 @@ if __name__ == "__main__":
     #run_coreset_points(n, m, k, sizes)
     
     #run_coreset_set_of_sets(n, m, k, sizes, do_lines=False) # colored points
-    run_coreset_set_of_sets(n, m, k, sizes, do_lines, use_text)  # lines 
+    run_coreset_set_of_sets(n, m, k, sizes, do_lines, use_text, r, is_colored)  # lines 
 
 
 '''
@@ -181,43 +190,58 @@ ax.set_title("3D model and sensitivities * {}".format(MUL))
 fig.show()
 '''
 
-'''
-# SENSITIVITY POINTS
-P=L
-MUL = 10
-plt.figure(); 
-plt.axes().set_aspect('equal')
-plt.title("Sensitivities * {}, n = {}, m = {}, k = {}, lines = {}, text = {}".format(
-    MUL, n, m, k, do_lines, use_text))
-for i in range(P.shape[1]):
-    plt.scatter(P[:,i,0], P[:,i,1], 
-               c=np.minimum(sensitivities * MUL, 1), s=4)    
-plt.colorbar()
-plt.xlabel("X")
-plt.ylabel("Y")
-# SENSITIVITY POINTS
-plt.figure(); 
-plt.axes().set_aspect('equal')
-plt.title("Log sensitivities, n = {}, m = {}, k = {}, lines = {}, text = {}".format(
-    n, m, k, do_lines, use_text))
-for i in range(P.shape[1]):
-    plt.scatter(P[:,i,0], P[:,i,1], 
-               c=np.log(sensitivities), s=4)    
-plt.colorbar()
-plt.xlabel("X")
-plt.ylabel("Y")
-# COLORED POINTS
-plt.figure(); 
-plt.axes().set_aspect('equal')
-plt.title("Colored points, n = {}, m = {}, k = {}, lines = {}, text = {}".format(
-    n, m, k, do_lines, use_text))
-for i in range(P.shape[1]):
-    plt.scatter(P[:,i,0], P[:,i,1], 
-               c=P[:,i,-1], s=4, vmin=0, vmax=2, alpha=0.2)    
-plt.colorbar()
-plt.xlabel("X")
-plt.ylabel("Y")
-'''
+if do_lines:
+    from matplotlib import cm
+    from drawing import draw_line_set
+    def draw_set_of_sets_of_lines_colored(L_set, s):
+        n, m, d2 = L_set.shape
+        for i in range(n):
+            L = L_set[i, :, :]
+            draw_line_set(L, color=cm.viridis(s[i]))
+
+    plt.figure()
+    plt.title("Sensitivities, n = {}, m = {}, k = {}".format(n,m,k))
+    draw_set_of_sets_of_lines_colored(L, sensitivities)
+    #plt.colorbar()
+    plt.xlabel("X")
+    plt.ylabel("Y")
+else:
+    # SENSITIVITY POINTS
+    P=L
+    MUL = 100
+    plt.figure(); 
+    plt.axes().set_aspect('equal')
+    plt.title("Sensitivities * {}, n = {}, m = {}, k = {}, lines = {}, text = {}".format(
+        MUL, n, m, k, do_lines, use_text))
+    for i in range(P.shape[1]):
+        plt.scatter(P[:,i,0], P[:,i,1], 
+                   c=np.minimum(sensitivities * MUL, 1), s=4)    
+    plt.colorbar()
+    plt.xlabel("X")
+    plt.ylabel("Y")
+    # SENSITIVITY POINTS
+    plt.figure(); 
+    plt.axes().set_aspect('equal')
+    plt.title("Log sensitivities, n = {}, m = {}, k = {}, lines = {}, text = {}".format(
+        n, m, k, do_lines, use_text))
+    for i in range(P.shape[1]):
+        plt.scatter(P[:,i,0], P[:,i,1], 
+                   c=np.log(sensitivities), s=4)    
+    plt.colorbar()
+    plt.xlabel("X")
+    plt.ylabel("Y")
+    
+    # COLORED POINTS
+    plt.figure(); 
+    plt.axes().set_aspect('equal')
+    plt.title("Colored points, n = {}, m = {}, k = {}, lines = {}, text = {}".format(
+        n, m, k, do_lines, use_text))
+    for i in range(P.shape[1]):
+        plt.scatter(P[:,i,0], P[:,i,1], 
+                   c=P[:,i,-1], s=4, vmin=0, vmax=2, alpha=0.2)    
+    plt.colorbar()
+    plt.xlabel("X")
+    plt.ylabel("Y")
 
 
 '''
