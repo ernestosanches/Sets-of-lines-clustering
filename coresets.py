@@ -4,12 +4,13 @@
 import numpy as np
 from itertools import chain
 from collections import Counter
-from median import (pack_lines,
-                    closest_points, closest_lines, unpack_lines, 
-                    pack_colored_points, closest_colored_points,
-                    median_colored_point_sets_to_points,
-                    closest_colored_point_sets_to_points,
-                    median_line_sets_to_points, closest_line_sets_to_points)
+from utils import (pack_colored_points, pack_lines,
+                   unpack_colored_points, unpack_lines)
+from median import (
+    closest_points, closest_lines, closest_colored_points,
+    median_colored_point_sets_to_points,
+    closest_colored_point_sets_to_points,
+    median_line_sets_to_points, closest_line_sets_to_points)
 
 ''' Translation and projection functions '''
 

@@ -1,14 +1,9 @@
 import numpy as np
-from matplotlib import pyplot as plt
-from joblib import Parallel, delayed
 from median import (
     robust_median, dist_points, dist_colored_points_min_set_to_point,
     enumerate_set_of_sets, dist_colored_points_min_p_to_set)
-from generation import (
-    generate_points, generate_colored_points_sets)
 from drawing import (
-    draw_colored_point_set, draw_point_set, draw_colored_point_set, 
-    draw_colored_point_sets)
+    draw_colored_point_set, draw_colored_point_sets, draw_point_set)
 
 def random_init(P, k):
     idx = np.random.choice(len(P), k, replace=False)
@@ -58,14 +53,6 @@ def kmedians(P, k, epsilon = 0.01, delta=1/20.0,
         curr_cost, centroids = find_centroids(groups, centroids)
         
         iteration += 1
-        '''
-        plt.cla()
-        for group in groups:
-            if len(group) > 0:
-                draw_f(np.asarray(group))
-        draw_centroids_f(np.asarray(centroids), s=500)
-        plt.pause(0.05)
-        '''
     print("KMedians iterations: {}, cost: {}, group sizes: {}".format(
         iteration, curr_cost, [len(g) for g in groups]))
     return curr_cost, centroids
@@ -83,6 +70,7 @@ def centroids_set_init(P, k):
     return np.concatenate(centroids, axis=0)
 
 if __name__ == "__main__":
+    from generation import generate_colored_points_sets
     n = 500
     m=2
     k = 4
@@ -97,5 +85,4 @@ if __name__ == "__main__":
                                #centroids_init=np.array(
                                #    [[0, 10,0], [0,-10,1], [100,10,0], [100,-10,1]])
                                )
-    # np.array([[0,0], [100,0]]))
     

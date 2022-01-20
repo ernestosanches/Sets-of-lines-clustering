@@ -1,15 +1,7 @@
 import numpy as np
-from median import (
-    robust_median, recursive_robust_median,
-    closest_lines, closest_points, dist_points,
-    closest_point_sets, pack_lines, unpack_lines,
-    pack_colored_points, dist_colored_points, dist_lines_min_set_to_set,
-    closest_colored_points, unpack_colored_points,
-    closest_colored_point_sets, dist_colored_points_min_set_to_set,
-    dist_colored_points_min_set_to_point, dist_colored_points_min_p_to_set,
-    enumerate_set_of_sets, closest_colored_point_sets_to_points)
-
-
+from utils import (pack_colored_points, pack_lines)
+from sklearn.datasets import (fetch_california_housing, 
+                              fetch_kddcup99, fetch_covtype)
 
 ''' Data generation functions '''
 
@@ -59,11 +51,9 @@ def generate_points_sets(n):
     n, d = P.shape    
     return stack_point_sets((P, Q)) #list(zip(P, Q))
 
-import pandas as pd
-from SetsClustering.Utils import createFlowerDataset, to_array
 
 def generate_colored_points_sets(n, m, r=1, is_colored=True):
-    
+    from SetsClustering.Utils import createFlowerDataset, to_array    
     set_P = createFlowerDataset(r=r, n = n - 90, m=m)
     #set_P_indiced = [(P, idx) for (idx, P) in enumerate(set_P)] 
     P, w = to_array(set_P)
@@ -143,13 +133,22 @@ def generate_set_of_lines(n, offset=np.zeros((1,2))):
     #d = d / np.linalg.norm(d, axis=-1)[:, np.newaxis]
     return pack_lines(c, d)
 
+
 def generate_set_of_sets_of_lines(n, m):
+    X, Y = fetch_california_housing(return_X_y=True)
     L_set = np.concatenate([
         np.expand_dims(generate_set_of_lines(
             n, offset=np.random.normal(0, 100, size=(1, 2)) * np.array([1, 0])),
             axis=1)
         for i in range(m)], axis=1)
-    
+    return L_set
+
+def generate_set_of_sets_of_lines_synthetic(n, m):
+    L_set = np.concatenate([
+        np.expand_dims(generate_set_of_lines(
+            n, offset=np.random.normal(0, 100, size=(1, 2)) * np.array([1, 0])),
+            axis=1)
+        for i in range(m)], axis=1)    
     '''
     #!!
     a = np.pi/12

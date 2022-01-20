@@ -3,7 +3,7 @@ from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.decomposition import TruncatedSVD, PCA
 from sklearn.manifold import TSNE
 from matplotlib import pyplot as plt
-from median import pack_colored_points
+from utils import pack_colored_points
 from sklearn.pipeline import Pipeline
 import numpy as np
 from itertools import chain
@@ -12,7 +12,6 @@ import nltk
 
 
 def load_text_data(n):
-    #X, y = fetch_20newsgroups(return_X_y=True)
     nltk.download("reuters")
     documents=nltk.corpus.reuters.fileids()
     train_docs_id = documents # list(filter(lambda doc: doc.startswith("train"), documents)) 
@@ -20,34 +19,13 @@ def load_text_data(n):
     
     if n < len(X):
         X = np.random.choice(X, n, replace=False)
-    #vectorizer = CountVectorizer()
-    #vectorizer.fit(X)
-    #X_tf = vectorizer.transform(X)
     N_COMPONENTS = 10
-    #lsa = TruncatedSVD(n_components=N_COMPONENTS).fit(X_tf)
     transformer = Pipeline(
         [("tf", CountVectorizer()), 
          ("lsa", TruncatedSVD(n_components=N_COMPONENTS)),
          ]).fit(X)
-    #tsne = TSNE(n_components=3)
-    
-    #xlsa = transformer.transform(X)
-    
-    '''
-    #xlsa = lsa.transform(X_tf)
-    #pca = PCA(n_components=N_COMPONENTS)
-    #xpca = pca.fit_transform(xlsa)
-    plt.figure() 
-    for i in range(N_COMPONENTS):
-        for j in range(N_COMPONENTS):
-            if i != j:
-                plt.scatter(xlsa[:,i], xlsa[:,j])
-    plt.figure()    
-    plt.scatter(xlsa[:,0], xlsa[:,1])
-    plt.figure()    
-    plt.scatter(xpca[:,0], xpca[:,1])
-    '''
-    
+    #tsne = TSNE(n_components=3)    
+
     def transform_and_color(data, color):
         transformed = transformer.transform(data)
         #transformed = tsne.fit_transform(transformed)
@@ -69,31 +47,20 @@ def load_text_data(n):
             p2 = paragraphs[one_third:-one_third]
             p3 = paragraphs[-one_third:]
         return ['\n'.join(x) for x in (p1, p2, p3)] 
-        '''
-        np.vstack((transform_and_color(p1, 0),
-                          transform_and_color(p2, 1),
-                          transform_and_color(p3, 2)))      
-        '''    
+
     X_paragraphs = map(chain, zip(*map(transform_document, X)))
     
     X_paragraphs_features = [
         np.expand_dims(transform_and_color(list(data), color), 1) 
         for color, data in enumerate(X_paragraphs)]
     points = np.concatenate(X_paragraphs_features, axis=1)
-    
-    #points = np.vstack(list(map(transform_document, X)))
-    '''
-    if n < len(points):
-        idx = np.random.choice(len(points), n, replace=False)
-        points = points[idx]
-    '''
     return points
 
-from sklearn.model_selection import train_test_split
-from lightgbm import LGBMClassifier
-from sklearn.metrics import accuracy_score
 
 if __name__ == '__main__':
+    from sklearn.model_selection import train_test_split
+    from lightgbm import LGBMClassifier
+    from sklearn.metrics import accuracy_score
     np.random.seed(7)
     n = 200000
     result = load_text_data(n)

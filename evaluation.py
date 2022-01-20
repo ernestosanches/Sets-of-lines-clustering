@@ -3,19 +3,18 @@
 
 
 import numpy as np
-from collections.abc import Iterable
 from matplotlib import pyplot as plt
 from joblib import Parallel, delayed
+from utils import (pack_colored_points, pack_lines,
+                   unpack_colored_points, unpack_lines)
 from median import (
     robust_median, recursive_robust_median,
     closest_lines, closest_points, dist_points,
-    closest_point_sets, pack_lines, unpack_lines,
-    pack_colored_points, dist_colored_points, dist_lines_min_set_to_set,
-    closest_colored_points, unpack_colored_points,
+    closest_point_sets, dist_colored_points, 
+    dist_lines_min_set_to_set, closest_colored_points, 
     closest_colored_point_sets, dist_colored_points_min_set_to_set,
     dist_colored_points_min_set_to_point, dist_colored_points_min_p_to_set,
     enumerate_set_of_sets, closest_colored_point_sets_to_points)
-
 from generation import (
     generate_points, generate_colored_points, generate_colored_points_sets,
     generate_points_sets, generate_set_of_lines, generate_set_of_sets_of_lines)
@@ -24,9 +23,9 @@ from drawing import (
     draw_colored_point_sets_all, draw_colored_points, draw_lines,
     draw_line_set, draw_lines_from_points, draw_lines_set_of_sets,
     draw_set_of_sets_of_lines, draw_point_set)
-
 from coresets import (CS_dense, Grouped_sensitivity, LS_dense, 
                       coreset, coreset_sample)
+from kmedians import kmedians, centroids_set_init
 
 
 
@@ -54,8 +53,6 @@ def test_colored_points_median(n=2000):
     P_color = np.abs(np.asarray(P_points.sum(
         axis=1, keepdims=True), dtype=int)) % 3
     P = pack_colored_points(P_points, P_color)
-    #plt.figure()
-    #plt.scatter(P[:, 0], P[:, 1], c=P_color)
     gamma = 1/5.0
     k = 10
     do_recursive=True
@@ -137,10 +134,6 @@ def test_point_sets():
     n=100
     P = generate_points_sets(n)
     plt.figure()
-    #draw_lines_from_points(P, color="blue")
-    #k=10
-    #res = CS_dense(P, k)
-    # dist_min_set_to_set
     gamma = 1/5.0
     Q = np.asarray([(np.array([-1,-1]), np.array([1,1]))])
     C, cost = closest_point_sets(P, Q, gamma)
@@ -155,11 +148,8 @@ def test_point_sets():
 def test_cs_dense():
     n = 5000
     m = k = 2
-    #gamma = 1/5.0
     P = generate_colored_points_sets(n, m)
-    #draw_colored_point_sets(P)
     Cd, Qd = CS_dense(P, k)
-    #Cd, _ = closest_colored_point_sets_to_points(Pd, Qd, gamma)
     Qd = np.expand_dims(Qd, axis=0) # single set to set of sets for drawing
     draw_colored_point_sets_all(P, Qd, Cd, "C, Q = CS_dense(P, k)")
     return Cd, Qd
@@ -181,10 +171,7 @@ def get_grouped_sensitivity():
     n = 2000
     k = 2
     m = 2
-    #gamma = 1/5.0
     L, P = generate_group_sensitivity_input(n, m)
-    #draw_lines_set_of_sets(L)
-    #draw_point_set(P, s=400)
     s_lines, P_L, s = Grouped_sensitivity(L, P, k)
     return L, P, s_lines, P_L, s
 
@@ -269,10 +256,6 @@ def cost_set_to_points(L_set_of_sets, Lw, P, dist_f=dist_lines_min_set_to_set):
         result += L_set_w * dist_f(L_set, P)
     return result
 
-
-from kmedians import kmedians, centroids_set_init
-P_queries = []
-
 def evaluate_lines(L, sensitivities, size, k, n_samples, sample_f):
     DO_K_MEDIANS = False
     if DO_K_MEDIANS:
@@ -311,8 +294,7 @@ def evaluate_lines(L, sensitivities, size, k, n_samples, sample_f):
     return epsilons, np.mean(epsilons), np.std(epsilons)
 
 
-from kmedians import kmedians, centroids_set_init
-P_queries = []
+P_queries = [] # TODO: remove global variable. Used to generate queries once.
 def evaluate_colored_points(L, sensitivities, size, k, n_samples, sample_f):
     global P_queries
     DO_K_MEDIANS = True
@@ -347,11 +329,9 @@ def evaluate_colored_points(L, sensitivities, size, k, n_samples, sample_f):
             all_p, all_colors = unpack_colored_points(all_points)
             p_min = np.min(all_p, axis=0)
             p_max = np.max(all_p, axis=0)
-            #(x_min, y_min), (x_max, y_max) = p_min, p_max
             color_min, color_max = np.min(all_colors), np.max(all_colors)
         else:
-            n, m = len(L), len(L[0])
-            P_queries = L# generate_colored_points_sets(n, m)
+            P_queries = L
     
     epsilons = []
     smallest = 1e-7
@@ -359,70 +339,25 @@ def evaluate_colored_points(L, sensitivities, size, k, n_samples, sample_f):
         Lm, Wm = sample_f(L, sensitivities, size=size)
         if DO_COMPLETE_RANDOM:
             coordinates_rnd = np.random.uniform(p_min, p_max, size=(k,len(p_min)))
-            #x_rnd = np.random.uniform(x_min, x_max, (k, 1))
-            #y_rnd = np.random.uniform(y_min, y_max, (k, 1))
             color_rnd = np.random.randint(color_min, color_max + 1, (k, 1))
             p_rnd = np.hstack((coordinates_rnd, color_rnd))
-            #p_rnd = np.hstack((x_rnd, y_rnd, color_rnd))
         else:
-            #if n_samples < len(P_queries):
             idx = np.random.randint(len(P_queries))
             p_rnd = np.asarray(P_queries[idx])
-            #else:
-            #    p_rnd = P_queries
         cost = cost_set_to_points(L, np.ones(len(L)), p_rnd,
                                   dist_f=dist_colored_points_min_set_to_set)
         cost_coreset = cost_set_to_points(Lm, Wm, p_rnd,
                                   dist_f=dist_colored_points_min_set_to_set)
-
         if cost > smallest:
             epsilon = np.abs(cost - cost_coreset) / cost
         else:
             epsilon = 0
-
         epsilons.append(epsilon)
     '''
+    # mean of maximums evaluation
     block_size = 20
     epsilons = [np.max(epsilons[i:i+block_size]) 
                 for i in range(0, len(epsilons), block_size)]
     '''
     return epsilons, np.mean(epsilons), np.std(epsilons)
-    #return np.max(epsilons), 0# np.std(epsilons)#np.mean(epsilons), 0 #np.std(epsilons)
-    #return np.mean(epsilons), np.std(epsilons)
-
-def evaluate_points(L, sensitivities, size, k, n_samples):
-    # TODO: generalize by creating a random generator
-    pass
     
-def plot_mu_sigma(x, mus, sigmas, color, label, n_samples):
-    plt.plot(x, mus, label=label, marker="s", color=color, linewidth=2)
-    sqrt_n = 1 #np.sqrt(n_samples)
-    plt.fill_between(x, 
-                     mus - sigmas / sqrt_n, 
-                     mus + sigmas / sqrt_n, 
-                     alpha = 0.1, color=color)
-
-def plot_graphs(epsilons, n, m, k, n_samples, do_lines, use_text, r, is_colored):
-    (sizes, epsilon_mus, epsilon_sigmas,
-     epsilon_mus_biased, epsilon_sigmas_biased,
-     epsilon_random_mus, epsilon_random_sigmas) = map(
-         np.asarray, zip(*epsilons))
-    prop_cycle = plt.rcParams['axes.prop_cycle']
-    colors = prop_cycle.by_key()['color']
-
-    plt.figure()
-    plot_mu_sigma(sizes, epsilon_mus_biased, epsilon_sigmas_biased, 
-                  colors[3], "Coreset (biased)", n_samples)
-    plot_mu_sigma(sizes, epsilon_mus, epsilon_sigmas, 
-                  colors[0], "Coreset", n_samples)
-    plot_mu_sigma(sizes, epsilon_random_mus, epsilon_random_sigmas, 
-                  colors[1], "Uniform sampling", n_samples)
-    plt.plot(sizes, np.zeros_like(sizes), label="Full data",
-             marker="s", color=colors[2], linewidth=2)
-    plt.title("Approximation comparison (n = {}, m = {}, k = {}, lines = {}, text = {})".format(
-        n, m, k, do_lines, use_text))
-    plt.ylabel("Error ratio (epsilon)")
-    plt.xlabel("Sample size")
-    plt.xscale("log")
-    #plt.yscale("log")
-    plt.legend()
