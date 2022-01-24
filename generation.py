@@ -78,11 +78,15 @@ def generate_set_of_lines(n, offset=np.zeros((1, 2)), variant=2):
 
 ''' 3D Point cloud processing functions'''
 
+def get_3d_cloud_path():
+    fpath = "/home/ernesto/projects/tracxpoint/sfm_postprocessing/"
+    fname = fpath + "points3DWithDescriptors_front (4).txt"
+    return fname
+
 def generate_colored_points_sets_3d_cloud(n, m, fname=None):
     assert(m == 1)
     if fname is None:
-        fpath = "/home/ernesto/projects/tracxpoint/sfm_postprocessing/"
-        fname = fpath + "points3DWithDescriptors_front (4).txt"
+        fname = get_3d_cloud_path()
     data = pd.read_csv(
         fname, delimiter="|", usecols=range(1,1+3), 
         header=0, names=["x", "y", "z"])#, "r", "g", "b"])  
@@ -98,7 +102,7 @@ def read_colors_3d_cloud(fname=None):
     data = pd.read_csv(
         fname, delimiter="|", usecols=range(4,4+3), 
         header=0, names=["r", "g", "b"])  
-    return data.values
+    return data.values / 255.0
 
 
 ''' Main dataset generation functions '''
@@ -183,7 +187,7 @@ def generate_data_set_of_sets(n, m, data_type):
     generate_fs = {
         Datasets.POINTS_SYNTHETIC : generate_colored_points_sets_synthetic_flower,
         Datasets.POINTS_REUTERS : generate_colored_points_sets_reuters,
-        #Datasets.POINTS_3D : None,
+        Datasets.POINTS_CLOUD : generate_colored_points_sets_3d_cloud,
         Datasets.LINES_SYNTHETIC : generate_set_of_sets_of_lines_synthetic,
         Datasets.LINES_COVTYPE : partial(generate_set_of_sets_of_lines_reconstruction,
                                          fetch_covtype),

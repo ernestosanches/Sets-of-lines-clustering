@@ -10,15 +10,15 @@ if __name__ == "__main__":
     if not path.exists("results"):
         mkdir("results")
     # parameters
-    n = 1000
-    m = 3
-    k = 1
+    n = 500
+    m = 1
+    k = 3
     n_samples = 30
-    do_lines = True
+    do_lines = False
     if do_lines:
         data_types = [Datasets.LINES_SYNTHETIC] 
     else: 
-        data_types = [Datasets.POINTS_SYNTHETIC] #Datasets.DATASETS_POINTS
+        data_types = [Datasets.POINTS_CLOUD]#[Datasets.POINTS_REUTERS] #Datasets.DATASETS_POINTS
     
     for data_type in data_types:
         print("\n{}: n = {}, m = {}, k = {}".format(

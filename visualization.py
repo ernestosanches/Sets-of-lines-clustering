@@ -6,11 +6,12 @@ from matplotlib import cm
 from drawing import draw_line_set
 from parameters import Datasets
 
-def _draw_sensitivities(P, sensitivities, data_type):
+def _draw_sensitivities(P, sensitivities, data_type, offset):
     def draw_points(P_set, s):
         #plt.axes().set_aspect('equal')
         for i in range(P_set.shape[1]):
-            plt.scatter(P_set[:,i,0], P_set[:,i,1], c=s, s=4)            
+            plt.scatter(P_set[:, i, 0 + offset], 
+                        P_set[:, i, 1 + offset], c=s, s=4)            
     def draw_lines(L_set, s):
         n, m, d2 = L_set.shape
         #plt.axes().set_aspect('equal')
@@ -25,7 +26,7 @@ def _draw_sensitivities(P, sensitivities, data_type):
         assert False, "Incorrect data type: {}".format(data_type)
 
 def visualize_coreset_sensitivities(P, sensitivities, k, data_type, 
-                                    apply_log=False):
+                                    apply_log=False, feature_offset=0):
     if apply_log:
         sensitivities = np.log(sensitivities)
     else:
@@ -39,7 +40,7 @@ def visualize_coreset_sensitivities(P, sensitivities, k, data_type,
             else "Sensitivities{}".format(" * {}".format(MUL) if MUL != 1
                                           else ""), 
         n, m, k))
-    _draw_sensitivities(P, sensitivities, data_type)
+    _draw_sensitivities(P, sensitivities, data_type, feature_offset)
     sm = plt.cm.ScalarMappable(cmap=cm.viridis, 
                                norm=plt.Normalize(vmin=sensitivities.min(), 
                                                   vmax=sensitivities.max()))
@@ -48,7 +49,7 @@ def visualize_coreset_sensitivities(P, sensitivities, k, data_type,
     plt.ylabel("Y")
     
 
-def visualize_points_colors(P, k, data_type):
+def visualize_points_colors(P, k, data_type, feature_offset=0):
     n, m, d = P.shape
     plt.figure(); 
     #plt.axes().set_aspect('equal')
@@ -57,65 +58,69 @@ def visualize_points_colors(P, k, data_type):
     cmin = P[:,:,-1].min()
     cmax = P[:,:,-1].max()
     for i in range(P.shape[1]):
-        plt.scatter(P[:,i,0], P[:,i,1], 
+        plt.scatter(P[:, i, 0 + feature_offset], P[:, i, 1 + feature_offset], 
                    c=P[:,i,-1], s=4, vmin=cmin, vmax=cmax, alpha=0.2)    
     plt.colorbar()
     plt.xlabel("X")
     plt.ylabel("Y")
 
-def visualize_coreset(P, sensitivities, k, data_type):
+def visualize_coreset(P, sensitivities, k, data_type, feature_offset=0):
     for apply_log in (False, True):
         visualize_coreset_sensitivities(
-            P, sensitivities, k, data_type, apply_log)
+            P, sensitivities, k, data_type, apply_log, feature_offset)
     if data_type in Datasets.DATASETS_POINTS:
-        visualize_points_colors(P, k, data_type)
+        visualize_points_colors(P, k, data_type, feature_offset)
+        d = P.shape[-1]
+        if d >= 3:
+            visualize_coreset_points_3d(P, sensitivities, data_type=data_type, 
+                                        feature_offset=feature_offset)
 
-########################################
-# TODO: Outliers removal main function #
-########################################
 
-def visualize_coreset_points_3d(P, sensitivities):
-    offs=0
-    MUL = 10
+##################################
+# Outliers removal visualization #
+##################################
+
+def visualize_coreset_points_3d(P, sensitivities, threshold=1, 
+                                data_type=None, feature_offset=0, 
+                                colors=None, mul=1):
+    def draw_3d(ax, points, idx, offset, sensitivities, 
+                colors, s, alpha, label):
+        c = (np.minimum(sensitivities[idx] * mul, 1) if colors is None 
+             else colors[idx])
+        ax.scatter(
+            points[idx, 0 + offset], points[idx, 1 + offset], 
+            points[idx, 2 + offset], c=c, s=s, alpha=alpha, label=label,
+            vmin=0, vmax=1#vmin=sensitivities.min(), vmax=sensitivities.max()
+            )        
+    idx_inliers = sensitivities <= threshold
+    idx_outliers = sensitivities > threshold
     n, m, d = P.shape
     fig = plt.figure()
+    ax = fig.add_subplot(projection="3d")
     for i in range(m):
         points = P[:,i,:]
-        ax = fig.add_subplot(projection="3d")
-        p = ax.scatter(points[:,0+offs], points[:,1+offs], points[:,2+offs],
-                       c=np.minimum(sensitivities*MUL, 1), s=4)
-    cbar = fig.colorbar(p) # TODO: pass an array of p's for all i's # TODO
-    cbar.ax.set_ylabel("Sensitivity")
+        draw_3d(ax, points, idx_inliers, feature_offset, sensitivities, 
+                colors=colors, s=1, alpha=None, label="Inliers")
+        if threshold < 1:
+            draw_3d(
+                ax, points, idx_outliers, feature_offset, sensitivities, 
+                colors=colors, s=25, alpha=0.3, label="Outliers")
+            ax.legend()
+    sm = plt.cm.ScalarMappable(cmap=cm.viridis, 
+                               norm=plt.Normalize(vmin=sensitivities.min(), 
+                                                  vmax=sensitivities.max()))
+    fig.colorbar(sm)
     ax.set_xlabel("X")
     ax.set_ylabel("Y")
     ax.set_zlabel("Z")
-    ax.set_title("3D model and sensitivities * {}".format(MUL))
+    ax.set_title("{}3D model{}{}".format(
+        "{}: ".format(data_type) if data_type is not None else "",
+        " and sensitivities" if colors is None else "",
+        " * {}".format(mul) if (mul != 1 and colors is None) else ""))
     fig.show()
 
-def load_colors_rgb(fname=None):
-    if fname is None:
-        fpath = "/home/ernesto/projects/tracxpoint/sfm_postprocessing/"
-        fname = path.join(fpath, "points3DWithDescriptors_front (4).txt")
+def load_colors_rgb(fname):
     colors = pd.read_csv(
         fname, delimiter="|", usecols=range(4,4+3), 
         header=0, names=["r", "g", "b"]).values / 255.0
     return colors
-
-
-def visualize_3d_outlier_removal(P, sensitivities, colors, quantile=0.92):
-    points = P[:,0,:]
-    sss = np.minimum(sensitivities, 1) 
-    sss_threshold = np.quantile(sss, quantile)
-    idx = sss <= sss_threshold
-    print("Total: {}, filtered: {}".format(len(points), sum(idx)))
-    fig = plt.figure()
-    ax = fig.add_subplot(projection="3d")
-    p = ax.scatter(points[idx,0], points[idx,1], points[idx,2],
-                   c=colors[idx], s=4)
-    cbar = fig.colorbar(p)
-    cbar.ax.set_ylabel("Sensitivity")
-    ax.set_xlabel("X")
-    ax.set_ylabel("Y")
-    ax.set_zlabel("Z")
-    ax.set_title("3D model and sensitivities. Quantile={}".format(quantile))
-    fig.show()
