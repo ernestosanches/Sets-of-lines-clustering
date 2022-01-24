@@ -1,0 +1,11 @@
+class Datasets:
+    POINTS_SYNTHETIC = "Synthetic points"
+    POINTS_REUTERS = "Reuters"
+    #POINTS_3D = "Points: 3D model"
+    LINES_SYNTHETIC = "Synthetic lines"
+    LINES_COVTYPE = "Covtype"
+    LINES_KDDCUP = "KDD Cup 99"
+    #LINES_TRIANGULATION = "Lines: Triangulation"    
+    DATASETS_POINTS = (POINTS_SYNTHETIC, POINTS_REUTERS) 
+    DATASETS_LINES = (LINES_SYNTHETIC, LINES_COVTYPE, LINES_KDDCUP)   
+    DATASETS_ALL = DATASETS_POINTS + DATASETS_LINES    

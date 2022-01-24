@@ -4,25 +4,28 @@
 import numpy as np
 from os import mkdir, path
 from tests import run_coreset_set_of_sets
+from parameters import Datasets
 
 if __name__ == "__main__":
     if not path.exists("results"):
         mkdir("results")
-
     # parameters
-    n = 100
-    comment = ""#"r = 1e6, no colors"
+    n = 1000
     m = 3
     k = 1
-    r = 1e6
-    is_colored = True
-    do_lines = False
-    use_text = True    
-    print("n = {}, m = {}, k = {}, lines = {}, text = {}, r = {}, is_colored = {}".format(
-        n, m, k, do_lines, use_text, r, is_colored))
-    print(comment)
-    sizes = np.logspace(1, 4, 10, dtype=int)
-    sizes = sizes[sizes < n]
+    n_samples = 30
+    do_lines = True
+    if do_lines:
+        data_types = [Datasets.LINES_SYNTHETIC] 
+    else: 
+        data_types = [Datasets.POINTS_SYNTHETIC] #Datasets.DATASETS_POINTS
     
-    ''' coreset testing ''' 
-    L, sensitivities = run_coreset_set_of_sets(n, m, k, sizes, do_lines, use_text, r, is_colored)  # lines 
+    for data_type in data_types:
+        print("\n{}: n = {}, m = {}, k = {}".format(
+            data_type, n, m, k))
+        sizes = np.logspace(1, 4, 10, dtype=int)
+        sizes = sizes[sizes < n]
+        
+        ''' coreset testing ''' 
+        L, sensitivities = run_coreset_set_of_sets(n, m, k, sizes, data_type,
+                                                   n_samples)

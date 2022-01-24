@@ -1,16 +1,7 @@
 import numpy as np
 from collections.abc import Iterable
 from matplotlib import pyplot as plt
-from utils import (pack_colored_points, pack_lines,
-                   unpack_colored_points, unpack_lines)
-from median import (
-    robust_median, recursive_robust_median,
-    closest_lines, closest_points, dist_points,
-    closest_point_sets, dist_colored_points, 
-    dist_lines_min_set_to_set, closest_colored_points,
-    closest_colored_point_sets, dist_colored_points_min_set_to_set,
-    dist_colored_points_min_set_to_point, dist_colored_points_min_p_to_set,
-    enumerate_set_of_sets, closest_colored_point_sets_to_points)
+from utils import unpack_colored_points, unpack_lines
 
 
 def draw_set_of_sets_of_lines(L_set, s=2, marker='o'):
@@ -20,8 +11,6 @@ def draw_set_of_sets_of_lines(L_set, s=2, marker='o'):
         L = L_set[:, i, :]
         draw_line_set(L, color=colors[i % len(colors)], s=s)
         
-''' Drawing functions '''        
-
 def draw_point_set(P, label=None, color=None, s=4, marker="o"):
     plt.scatter(P[:, 0], P[:, 1], label=label, c=color, s=s, zorder=10,
                 marker=marker)
@@ -87,11 +76,11 @@ def draw_line_set(lines, color, s=2):
         def alpha(a):
             return a if set_alpha is None else set_alpha * a
         c, d, s = c[idx], d[idx], s[idx]
-        draw_lines_from_points(c - 2 * d, c + 2 * d, color, s, 
+        draw_lines_from_points(c - 1 * d, c + 1 * d, color, s, 
                                alpha=alpha(0.1))
-        draw_lines_from_points(c - 5 * d, c + 5 * d, color, s, 
+        draw_lines_from_points(c - 2 * d, c + 2 * d, color, s, 
                                alpha=alpha(0.05))
-        draw_lines_from_points(c - 10 * d, c + 10 * d, color, s,
+        draw_lines_from_points(c - 3 * d, c + 3 * d, color, s,
                                alpha=alpha(0.02))
     c, d = unpack_lines(lines)
     if not isinstance(s, Iterable):
@@ -118,6 +107,7 @@ def draw_lines_set_of_sets(L, widths=None):
 
 
 #####################
+
 def plot_mu_sigma(x, mus, sigmas, color, label, n_samples):
     plt.plot(x, mus, label=label, marker="s", color=color, linewidth=2)
     sqrt_n = 1 #np.sqrt(n_samples)
@@ -126,28 +116,26 @@ def plot_mu_sigma(x, mus, sigmas, color, label, n_samples):
                      mus + sigmas / sqrt_n, 
                      alpha = 0.1, color=color)
 
-def plot_graphs(epsilons, n, m, k, n_samples, do_lines, use_text, r, is_colored):
+def plot_graphs(epsilons, n, m, k, n_samples, data_type):
     (sizes, epsilon_mus, epsilon_sigmas,
-     #epsilon_mus_biased, epsilon_sigmas_biased,
      epsilon_random_mus, epsilon_random_sigmas) = map(
          np.asarray, zip(*epsilons))
     prop_cycle = plt.rcParams['axes.prop_cycle']
     colors = prop_cycle.by_key()['color']
 
     plt.figure()
-    #plot_mu_sigma(sizes, epsilon_mus_biased, epsilon_sigmas_biased, 
-    #              colors[3], "Coreset (biased)", n_samples)
     plot_mu_sigma(sizes, epsilon_mus, epsilon_sigmas, 
                   colors[0], "Coreset", n_samples)
     plot_mu_sigma(sizes, epsilon_random_mus, epsilon_random_sigmas, 
                   colors[1], "Uniform sampling", n_samples)
     plt.plot(sizes, np.zeros_like(sizes), label="Full data",
              marker="s", color=colors[2], linewidth=2)
-    plt.title("Approximation comparison (n = {}, m = {}, k = {}, lines = {}, text = {})".format(
-        n, m, k, do_lines, use_text))
+    plt.title("Approximation comparison ({}: n = {}, m = {}, k = {})".format(
+        data_type, n, m, k))
     plt.ylabel("Error ratio (epsilon)")
     plt.xlabel("Sample size")
     plt.xscale("log")
     #plt.yscale("log")
+    plt.ylim(0, 1.1 * max(epsilon_mus.max(), epsilon_random_mus.max()))
     plt.legend()
 

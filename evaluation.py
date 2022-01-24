@@ -16,17 +16,17 @@ from median import (
     dist_colored_points_min_set_to_point, dist_colored_points_min_p_to_set,
     enumerate_set_of_sets, closest_colored_point_sets_to_points)
 from generation import (
-    generate_points, generate_colored_points, generate_colored_points_sets,
-    generate_points_sets, generate_set_of_lines, generate_set_of_sets_of_lines)
+    generate_points, generate_points_sets, 
+    generate_set_of_lines, generate_data_set_of_sets)
 from drawing import (
     draw_points, draw_colored_point_set, draw_colored_point_sets,
     draw_colored_point_sets_all, draw_colored_points, draw_lines,
-    draw_line_set, draw_lines_from_points, draw_lines_set_of_sets,
+    draw_lines_from_points, draw_lines_set_of_sets,
     draw_set_of_sets_of_lines, draw_point_set)
 from coresets import (CS_dense, Grouped_sensitivity, LS_dense, 
                       coreset, coreset_sample)
 from kmedians import kmedians, centroids_set_init
-
+from parameters import Datasets
 
 
 ''' Testing functions for intermediate algorithms '''
@@ -67,9 +67,8 @@ def test_colored_points_median(n=2000):
     draw_colored_points(P, Q, C, "Q = Median(P); C = Closest(P, Q)")
     return P, Q, C
 
-def test_colored_point_sets_to_sets_median(n=50):
-    P = generate_colored_points_sets(n)
-    #draw_colored_point_sets(P)
+def test_colored_point_sets_to_sets_median(n=50, m=3):
+    P = generate_data_set_of_sets(n, m, Datasets.POINTS_SYNTHETIC)
     gamma = 1/5.0
     k = 10
     do_recursive=False
@@ -86,9 +85,8 @@ def test_colored_point_sets_to_sets_median(n=50):
     draw_colored_point_sets_all(P, Q, C, "Q = Median(P); C = Closest(P, Q)")
     return P, Q, C
 
-def test_colored_point_sets_to_points_median(n=20):
-    P = generate_colored_points_sets(n)
-    #draw_colored_point_sets(P)
+def test_colored_point_sets_to_points_median(n=20, m=3):
+    P = generate_data_set_of_sets(n, m, Datasets.POINTS_SYNTHETIC)
     gamma = 1/5.0
     k = 10
     do_recursive=False
@@ -111,24 +109,10 @@ def test_colored_point_sets_to_points_median(n=20):
 
 def test_lines_median(n=100):
     L = generate_set_of_lines(n)
-    gamma = 1/5.0
-    
+    gamma = 1/5.0    
     Q = np.array([[-1,-1], [1,1]])
     C, cost = closest_lines(L, Q, gamma)
     draw_lines(L, Q, C, "Q = [[-1,-1], [1,1]]; C = closest(L, Q)")
-    '''
-    k = 10
-    do_recursive=False
-    if do_recursive:
-        Q, center, cost_med = recursive_robust_median(L, k, tau=1/10, delta=1/10,
-                                                   dist_f=dist_lines)
-    else:
-        center, cost_med = robust_median(L, k, delta=1/10,
-                                     dist_f=dist_lines)
-        Q = np.array(center)[np.newaxis, :]
-    C, cost = closest_lines(L, Q, gamma)
-    draw_lines(L, Q, C, "Q = Median(P); C = Closest(P, Q)")
-    '''
     
 def test_point_sets():
     n=100
@@ -148,7 +132,7 @@ def test_point_sets():
 def test_cs_dense():
     n = 5000
     m = k = 2
-    P = generate_colored_points_sets(n, m)
+    P = generate_data_set_of_sets(n, m, Datasets.POINTS_SYNTHETIC)
     Cd, Qd = CS_dense(P, k)
     Qd = np.expand_dims(Qd, axis=0) # single set to set of sets for drawing
     draw_colored_point_sets_all(P, Qd, Cd, "C, Q = CS_dense(P, k)")
@@ -185,7 +169,7 @@ def get_ls_dense():
     k = 2
     n = 1000
     m = 2
-    L = generate_set_of_sets_of_lines(n, m)
+    L = generate_data_set_of_sets(n, m, Datasets.LINES_SYNTHETIC)
     plt.figure()
     draw_set_of_sets_of_lines(L,s=1)
     Lm, Bm = LS_dense(L, k)
@@ -195,33 +179,22 @@ def test_ls_dense(Lm, Bm):
     draw_set_of_sets_of_lines(np.asarray(list(Lm)), s=10)
     draw_point_set(Bm, s=400, color="black")
 
-def get_coreset_lines(n, m, k):
-    L = generate_set_of_sets_of_lines(n, m)
-    sensitivities = coreset(L, k)
+############
+
+def _get_coreset(n, m, k, data_type, f_dense, seed):
+    np.random.seed(seed)
+    L = generate_data_set_of_sets(n, m, data_type)
+    sensitivities = coreset(L, k, f_dense=f_dense)
     return L, sensitivities
 
-from text import load_text_data
+def get_coreset_lines(n, m, k, data_type, seed=432):
+    return _get_coreset(n, m, k, data_type, LS_dense, seed)
 
-def get_coreset_points(n, m, k, USE_TEXT, r=1, is_colored=True):
-    #USE_TEXT = False #(m==3)
-    if USE_TEXT:
-        #assert(m==3) # for text data
-        if m == 3:
-            print("Loading data (m = 3)...")
-            P = load_text_data(n)
-            print("Data loaded.")
-        elif m == 1:
-            print("Loading data (m = 1)...")
-            P = load_text_data(n // 3)
-            P = P.reshape((-1, 1, P.shape[-1]))
-            P[:, :, -1] = 0
-            print("Data loaded.")
-        else:
-            assert False, "Incorrect m: {}".format(m)
-    else:
-        P = generate_colored_points_sets(n, m, r, is_colored)
-    sensitivities = coreset(P, k, f_dense=CS_dense)
-    return P, sensitivities
+def get_coreset_points(n, m, k, data_type, seed=432):
+    return _get_coreset(n, m, k, data_type, CS_dense, seed)
+
+############
+
 
 def test_coreset(L, sensitivities, title, do_draw, sizes):
     if do_draw:
@@ -235,7 +208,6 @@ def test_coreset(L, sensitivities, title, do_draw, sizes):
         plt.figure()
         plt.title("Original data sensitivities")
         f_draw(L, s=50 * sensitivities)
-
     for size in sizes:
         print("{}: Sampling size: {}".format(title, size))
         Lm, Wm = coreset_sample(L, sensitivities, size=size)
@@ -256,7 +228,7 @@ def cost_set_to_points(L_set_of_sets, Lw, P, dist_f=dist_lines_min_set_to_set):
         result += L_set_w * dist_f(L_set, P)
     return result
 
-def evaluate_lines(L, sensitivities, size, k, n_samples, sample_f):
+def evaluate_lines(L, sensitivities, size, k, n_samples, sample_f, P_queries):
     DO_K_MEDIANS = False
     if DO_K_MEDIANS:
         pass
@@ -284,8 +256,6 @@ def evaluate_lines(L, sensitivities, size, k, n_samples, sample_f):
     
     epsilons = Parallel()([
         delayed(evaluate_sample)() for i in range(n_samples)])
-    #epsilons = [
-    #    evaluate_sample() for i in range(n_samples)]
     '''
     block_size = 10
     epsilons = [np.max(epsilons[i:i+block_size]) 
@@ -294,13 +264,11 @@ def evaluate_lines(L, sensitivities, size, k, n_samples, sample_f):
     return epsilons, np.mean(epsilons), np.std(epsilons)
 
 
-P_queries = [] # TODO: remove global variable. Used to generate queries once.
-def evaluate_colored_points(L, sensitivities, size, k, n_samples, sample_f):
-    global P_queries
+def evaluate_colored_points(L, sensitivities, size, k, n_samples, sample_f,
+                            P_queries):
     DO_K_MEDIANS = True
     if DO_K_MEDIANS:
         DO_COMPLETE_RANDOM = False
-        #n_samples = 5
         if len(P_queries) == 0:
             #plt.figure()
             print("Building set of optimal queries")
@@ -318,8 +286,9 @@ def evaluate_colored_points(L, sensitivities, size, k, n_samples, sample_f):
                     #    [[0, 10,0], [0,-10,1], [100,10,0], [100,-10,1]])
                     )
                 return centroids
-            P_queries = Parallel()(
+            result = Parallel()(
                 [delayed(do_work)(i) for i in range(n_samples)])
+            P_queries.extend(result)
             print("Finished building set of optimal queries")
         pass
     else:

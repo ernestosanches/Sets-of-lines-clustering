@@ -4,13 +4,13 @@
 import numpy as np
 from itertools import chain
 from collections import Counter
-from utils import (pack_colored_points, pack_lines,
-                   unpack_colored_points, unpack_lines)
+from utils import pack_colored_points, pack_lines, unpack_lines
 from median import (
     closest_points, closest_lines, closest_colored_points,
     median_colored_point_sets_to_points,
     closest_colored_point_sets_to_points,
     median_line_sets_to_points, closest_line_sets_to_points)
+
 
 ''' Translation and projection functions '''
 
@@ -105,10 +105,15 @@ def CS_dense(P, k, m_CS=2, tau=1/20., k_closest=2):
     k_closest = min(k, 3) #min(k_closest, 4 * k)
     P_prev = P
     delta = tau
+    stopCondition = False
     for r in range(k_closest):
+        if stopCondition:
+            break
         B_prev = []
         #print("r=",r)
         for l in range(m_CS):
+            if stopCondition:
+                break
             #print("l=", l)
             P_prev_hat = np.asarray([proj_hat_colored_point(P, B_prev) 
                                      for P in P_prev])
@@ -124,6 +129,7 @@ def CS_dense(P, k, m_CS=2, tau=1/20., k_closest=2):
             #                             proj_hat_colored_point(P, B_prev), 
             #                             P_hat_closest)])
             B_prev.append(b)       
+            stopCondition = len(P_prev) <= 1
             print("r={}, l={}, P_hat_closest: {}, P_prev: {}".format(
                 r, l, len(P_hat_closest), len(P_prev)))
     return P_prev, np.asarray(B_prev)
@@ -248,12 +254,6 @@ def coreset(L, k, f_dense=LS_dense,
     
     print("s:", len(L), len(s))    
     sensitivities = np.asarray([s[hash_to_f(L_set)] for L_set in L])
-
-    '''
-    B = L[0,:,:2]
-    sensitivities, _, _ = Grouped_sensitivity(L, B, k)
-    '''
-    
     print("Coreset sensitivities counts", Counter(sensitivities))
     return sensitivities
 
@@ -288,16 +288,16 @@ def coreset_sample_biased(L, sensitivities, size):
 
 def coreset_sample(L, sensitivities, size):
     ''' Samples points or lines according to given sensitivities '''
-    #sensitivities = sensitivities + 1 / len(L)
+    sensitivities = sensitivities + 1 / len(L)
     t = sensitivities.sum()
     p_sampling = sensitivities / t
 
     M_idx = np.random.choice(
         np.arange(len(L)), size=size, 
-        p=p_sampling, replace=True) # TODO: should be true by theory
+        p=p_sampling, replace=True)
     
     coreset = L[M_idx]
     weights = 1 / (size * p_sampling[M_idx])
 
-    return coreset, weights #* len(L) / weights.sum()
+    return coreset, weights
     

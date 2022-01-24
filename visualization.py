@@ -2,6 +2,77 @@ import numpy as np
 import pandas as pd
 from os import path
 from matplotlib import pyplot as plt
+from matplotlib import cm
+from drawing import draw_line_set
+from parameters import Datasets
+
+def _draw_sensitivities(P, sensitivities, data_type):
+    def draw_points(P_set, s):
+        #plt.axes().set_aspect('equal')
+        for i in range(P_set.shape[1]):
+            plt.scatter(P_set[:,i,0], P_set[:,i,1], c=s, s=4)            
+    def draw_lines(L_set, s):
+        n, m, d2 = L_set.shape
+        #plt.axes().set_aspect('equal')
+        for i in range(n):
+            L = L_set[i, :, :]
+            draw_line_set(L, color=cm.viridis(s[i]))
+    if data_type in Datasets.DATASETS_POINTS:
+        draw_points(P, sensitivities)
+    elif data_type in Datasets.DATASETS_LINES:
+        draw_lines(P, sensitivities)
+    else:
+        assert False, "Incorrect data type: {}".format(data_type)
+
+def visualize_coreset_sensitivities(P, sensitivities, k, data_type, 
+                                    apply_log=False):
+    if apply_log:
+        sensitivities = np.log(sensitivities)
+    else:
+        MUL = 1
+        sensitivities = np.minimum(MUL * sensitivities, 1)
+    n, m, d = P.shape
+    plt.figure(); 
+    plt.title("{}: {}, n = {}, m = {}, k = {}".format( 
+        data_type,
+        "Log sensitivities" if apply_log 
+            else "Sensitivities{}".format(" * {}".format(MUL) if MUL != 1
+                                          else ""), 
+        n, m, k))
+    _draw_sensitivities(P, sensitivities, data_type)
+    sm = plt.cm.ScalarMappable(cmap=cm.viridis, 
+                               norm=plt.Normalize(vmin=sensitivities.min(), 
+                                                  vmax=sensitivities.max()))
+    plt.colorbar(sm)
+    plt.xlabel("X")
+    plt.ylabel("Y")
+    
+
+def visualize_points_colors(P, k, data_type):
+    n, m, d = P.shape
+    plt.figure(); 
+    #plt.axes().set_aspect('equal')
+    plt.title("{}: Colored points, n = {}, m = {}, k = {}".format(
+        data_type, n, m, k))
+    cmin = P[:,:,-1].min()
+    cmax = P[:,:,-1].max()
+    for i in range(P.shape[1]):
+        plt.scatter(P[:,i,0], P[:,i,1], 
+                   c=P[:,i,-1], s=4, vmin=cmin, vmax=cmax, alpha=0.2)    
+    plt.colorbar()
+    plt.xlabel("X")
+    plt.ylabel("Y")
+
+def visualize_coreset(P, sensitivities, k, data_type):
+    for apply_log in (False, True):
+        visualize_coreset_sensitivities(
+            P, sensitivities, k, data_type, apply_log)
+    if data_type in Datasets.DATASETS_POINTS:
+        visualize_points_colors(P, k, data_type)
+
+########################################
+# TODO: Outliers removal main function #
+########################################
 
 def visualize_coreset_points_3d(P, sensitivities):
     offs=0
@@ -13,69 +84,13 @@ def visualize_coreset_points_3d(P, sensitivities):
         ax = fig.add_subplot(projection="3d")
         p = ax.scatter(points[:,0+offs], points[:,1+offs], points[:,2+offs],
                        c=np.minimum(sensitivities*MUL, 1), s=4)
-    cbar = fig.colorbar(p) # TODO: pass an array of p's for all i's
+    cbar = fig.colorbar(p) # TODO: pass an array of p's for all i's # TODO
     cbar.ax.set_ylabel("Sensitivity")
     ax.set_xlabel("X")
     ax.set_ylabel("Y")
     ax.set_zlabel("Z")
     ax.set_title("3D model and sensitivities * {}".format(MUL))
     fig.show()
-
-
-def visualize_coreset_lines(L, sensitivities, k):
-    from matplotlib import cm
-    from drawing import draw_line_set
-    def draw_set_of_sets_of_lines_colored(L_set, s):
-        n, m, d2 = L_set.shape
-        for i in range(n):
-            L = L_set[i, :, :]
-            draw_line_set(L, color=cm.viridis(s[i]))
-    n, m, d = L.shape
-    plt.figure()
-    plt.title("Sensitivities, n = {}, m = {}, k = {}".format(n,m,k))
-    draw_set_of_sets_of_lines_colored(L, sensitivities)
-    #plt.colorbar()
-    plt.xlabel("X")
-    plt.ylabel("Y")
-
-def visualize_coreset_points(P, sensitivities, k, do_lines, use_text,
-                             apply_log=False):
-    if apply_log:
-        sensitivities = np.log(sensitivities)
-    else:
-        MUL = 10
-        sensitivities = np.minimum(MUL * sensitivities, 1)
-    n, m, d = P.shape
-    plt.figure(); 
-    plt.axes().set_aspect('equal')
-    plt.title("{}, n = {}, m = {}, k = {}, lines = {}, text = {}".format(
-        "Log sensitivities" if apply_log 
-            else "Sensitivities * {}".format(MUL), 
-        n, m, k, do_lines, use_text))
-    for i in range(P.shape[1]):
-        plt.scatter(P[:,i,0], P[:,i,1], c=sensitivities, s=4)    
-    plt.colorbar()
-    plt.xlabel("X")
-    plt.ylabel("Y")
-    
-    
-
-# COLORED POINTS
-def visualize_points_colors(P, k, do_lines, use_text):
-    n, m, d = P.shape
-    plt.figure(); 
-    plt.axes().set_aspect('equal')
-    plt.title("Colored points, n = {}, m = {}, k = {}, lines = {}, text = {}".format(
-        n, m, k, do_lines, use_text))
-    cmin = P[:,:,-1].min()
-    cmax = P[:,:,-1].max()
-    for i in range(P.shape[1]):
-        plt.scatter(P[:,i,0], P[:,i,1], 
-                   c=P[:,i,-1], s=4, vmin=cmin, vmax=cmax, alpha=0.2)    
-    plt.colorbar()
-    plt.xlabel("X")
-    plt.ylabel("Y")
-
 
 def load_colors_rgb(fname=None):
     if fname is None:
