@@ -286,9 +286,13 @@ def evaluate_colored_points(L, sensitivities, size, k, n_samples, sample_f,
                     #    [[0, 10,0], [0,-10,1], [100,10,0], [100,-10,1]])
                     )
                 return centroids
+            # almost optimal queries
             result = Parallel()(
-                [delayed(do_work)(i) for i in range(n_samples)])
+                [delayed(do_work)(i) for i in range(n_samples // 2)])
             P_queries.extend(result)
+            idx = np.random.choice(len(L), n_samples // 2, replace=False)
+            P_queries.extend(L[idx])
+            np.random.shuffle(P_queries)
             print("Finished building set of optimal queries")
         pass
     else:
@@ -322,11 +326,9 @@ def evaluate_colored_points(L, sensitivities, size, k, n_samples, sample_f,
         else:
             epsilon = 0
         epsilons.append(epsilon)
-    '''
     # mean of maximums evaluation
-    block_size = 20
+    block_size = n_samples // 10
     epsilons = [np.max(epsilons[i:i+block_size]) 
                 for i in range(0, len(epsilons), block_size)]
-    '''
     return epsilons, np.mean(epsilons), np.std(epsilons)
     

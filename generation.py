@@ -158,9 +158,49 @@ def generate_colored_points_sets_synthetic_random(n, m, variant=3):
     return stack_point_sets(colored_points)
 
 
-def generate_set_of_sets_of_lines_reconstruction(n, m, fetch_data_f):
+def generate_set_of_sets_of_lines_reconstruction(
+        n, m, fetch_data_f, continuous_features, discrete_features):        
     X, Y = fetch_data_f(return_X_y=True)
-    return None
+    X = X[np.random.choice(len(X), n, replace=False)]
+    X = X[:, 4:6] # TODO: remove; use all dimensions
+    X = np.asarray(X, dtype=float)
+    X = (X - np.mean(X, axis=0)) / np.std(X, axis=0)
+    
+    n, d = X.shape
+    
+    p_set = np.repeat(np.expand_dims(X, axis=1), m, axis=1)
+    d_set = np.zeros((n, m, d))
+    
+    if d > 2:
+        continuous_idxs = np.random.choice(continuous_features, n)
+        discrete_idxs = np.random.choice(discrete_features, n)
+    else:
+        continuous_idxs = np.random.choice([0, 1], n)
+        discrete_idxs = 1 - continuous_idxs
+        continuous_features = [0, 1]
+        discrete_features = [0, 1]
+    continuous_values = np.zeros((n, m))
+    discrete_values = np.zeros((n, m))
+    for i in continuous_features:
+        idx = (continuous_idxs == i)
+        continuous_values[idx] = np.random.choice(X[:, i], (np.sum(idx),m))
+    for i in discrete_features:
+        idx = (discrete_idxs == i)
+        discrete_values[idx] = np.random.choice(X[:, i], (np.sum(idx),m))
+    
+    p_set[np.arange(n), :, continuous_idxs] = continuous_values
+    p_set[np.arange(n), :, discrete_idxs] = discrete_values
+    d_set[np.arange(n), :, continuous_idxs] = 1
+    L = np.concatenate((p_set, d_set), axis=-1)
+    return L
+
+
+if __name__ == "__main__":
+    ff = lambda return_X_y: (np.arange(16).reshape((8,2)), 0)
+    aa = generate_set_of_sets_of_lines_reconstruction(8,4, ff, [0], [1])
+
+
+
 
 def generate_set_of_sets_of_lines_synthetic(n, m, variant=1):
     if variant == 1:
@@ -185,14 +225,19 @@ from parameters import Datasets
 
 def generate_data_set_of_sets(n, m, data_type):
     generate_fs = {
-        Datasets.POINTS_SYNTHETIC : generate_colored_points_sets_synthetic_flower,
+        Datasets.POINTS_SYNTHETIC : generate_colored_points_sets_synthetic_random,
+        Datasets.POINTS_FLOWER : generate_colored_points_sets_synthetic_flower,
         Datasets.POINTS_REUTERS : generate_colored_points_sets_reuters,
         Datasets.POINTS_CLOUD : generate_colored_points_sets_3d_cloud,
         Datasets.LINES_SYNTHETIC : generate_set_of_sets_of_lines_synthetic,
-        Datasets.LINES_COVTYPE : partial(generate_set_of_sets_of_lines_reconstruction,
-                                         fetch_covtype),
-        Datasets.LINES_KDDCUP : partial(generate_set_of_sets_of_lines_reconstruction,
-                                         fetch_kddcup99),
+        Datasets.LINES_COVTYPE : partial(
+            generate_set_of_sets_of_lines_reconstruction,
+            fetch_data_f=fetch_covtype, 
+            continuous_features=[0,1], discrete_features=[0,1]),
+        Datasets.LINES_KDDCUP : partial(
+            generate_set_of_sets_of_lines_reconstruction,
+            fetch_data_f=fetch_kddcup99, 
+            continuous_features=[0,1], discrete_features=[0,1]),
         #Datasets.LINES_TRIANGULATION : None,        
         }
     generate_f = generate_fs[data_type]

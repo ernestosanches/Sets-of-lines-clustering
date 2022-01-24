@@ -71,7 +71,7 @@ def visualize_coreset(P, sensitivities, k, data_type, feature_offset=0):
     if data_type in Datasets.DATASETS_POINTS:
         visualize_points_colors(P, k, data_type, feature_offset)
         d = P.shape[-1]
-        if d >= 3:
+        if d >= 3+1:
             visualize_coreset_points_3d(P, sensitivities, data_type=data_type, 
                                         feature_offset=feature_offset)
 
