@@ -17,9 +17,9 @@ if __name__ == "__main__":
     do_lines = True
     if do_lines:
         data_types = [#Datasets.LINES_RANDOM
-                      #Datasets.LINES_PERPENDICULAR,
+                      Datasets.LINES_PERPENDICULAR,
                       #Datasets.LINES_KDDCUP,
-                      Datasets.LINES_COVTYPE,
+                      #Datasets.LINES_COVTYPE,
                       ]
     else:
         data_types = [Datasets.POINTS_CLOUD,

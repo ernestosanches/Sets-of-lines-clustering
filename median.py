@@ -58,8 +58,8 @@ def dist_colored_points_min_set_to_set(P, Q):
 
 def dist_lines_min_set_to_point(P, Q):
     return dist_min_set_to_point(P, Q, dist_lines)
-def dist_lines_min_p_to_set(P, Q):
-    return dist_colored_points_min_set_to_point(Q, P)
+def dist_lines_min_p_to_set(P, Q): # TODO
+    return dist_lines_min_set_to_point(Q, P) #dist_colored_points_min_set_to_point(Q, P)
 def dist_lines_min_set_to_set(P, Q):
     return dist_min_set_to_set(P, Q, dist_lines)
 
@@ -238,7 +238,7 @@ def robust_median(P, k, delta=1/20.0,
         Parameters meaning is same as in median_exhaustive '''
     b = 4 / (1-delta) # constant that can be found from proofs of the lemmas
     n = len(P)
-    size = max(1, int(np.ceil(b * k**2 * np.log(1/delta)))) # 120
+    size = max(1, int(np.ceil(b * k**2 * np.log(1/delta)))) # 120 # TODO
     if size < len(P):
         idx = np.random.choice(n, size=min(size, n), replace=True) 
         S = P[idx]

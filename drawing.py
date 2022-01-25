@@ -78,9 +78,9 @@ def draw_line_set(lines, color, s=2):
         c, d, s = c[idx], d[idx], s[idx]
         draw_lines_from_points(c - 1 * d, c + 1 * d, color, s, 
                                alpha=alpha(0.1))
-        draw_lines_from_points(c - 2 * d, c + 2 * d, color, s, 
+        draw_lines_from_points(c - 5 * d, c + 5 * d, color, s, 
                                alpha=alpha(0.05))
-        draw_lines_from_points(c - 3 * d, c + 3 * d, color, s,
+        draw_lines_from_points(c - 10 * d, c + 10 * d, color, s,
                                alpha=alpha(0.02))
     c, d = unpack_lines(lines)
     if not isinstance(s, Iterable):

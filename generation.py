@@ -3,6 +3,7 @@ import pandas as pd
 from functools import partial
 from utils import unpack_lines, pack_lines, pack_colored_points
 from sklearn.datasets import fetch_kddcup99, fetch_covtype
+from sklearn.preprocessing import scale
 
 from text import load_text_data
 
@@ -162,9 +163,9 @@ def generate_set_of_sets_of_lines_reconstruction(
         n, m, fetch_data_f, continuous_features, discrete_features):        
     X, Y = fetch_data_f(return_X_y=True)
     X = X[np.random.choice(len(X), n, replace=False)]
-    X = X[:, 4:6] # TODO: remove; use all dimensions
+    #X = X[:, 4:6] # TODO: remove; use all dimensions
     X = np.asarray(X, dtype=float)
-    X = (X - np.mean(X, axis=0)) / np.std(X, axis=0)
+    X = scale(X)
     
     n, d = X.shape
     
