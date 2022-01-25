@@ -1,7 +1,6 @@
 ''' Coreset evaluation and comparison with random sampling.
     Also allows testing of intermediate algorithms. '''
 
-
 import numpy as np
 from matplotlib import pyplot as plt
 from joblib import Parallel, delayed
@@ -14,7 +13,8 @@ from median import (
     dist_lines_min_set_to_set, closest_colored_points, 
     closest_colored_point_sets, dist_colored_points_min_set_to_set,
     dist_colored_points_min_set_to_point, dist_colored_points_min_p_to_set,
-    enumerate_set_of_sets, closest_colored_point_sets_to_points)
+    enumerate_set_of_sets, enumerate_set_of_sets_centroids,
+    closest_colored_point_sets_to_points)
 from generation import (
     generate_points, generate_points_sets, 
     generate_set_of_lines, generate_data_set_of_sets)
@@ -225,42 +225,46 @@ def test_coreset(L, sensitivities, title, do_draw, sizes):
 def cost_set_to_points(L_set_of_sets, Lw, P, dist_f=dist_lines_min_set_to_set):
     result = 0
     for L_set, L_set_w in zip(L_set_of_sets, Lw):
-        result += L_set_w * dist_f(L_set, P)
+        best_dist = np.inf
+        for p in P: # over k centers in the query
+            curr_dist = dist_f(L_set, p)
+            if curr_dist < best_dist:
+                best_dist = curr_dist
+        result += L_set_w * best_dist
     return result
 
 def evaluate_lines(L, sensitivities, size, k, n_samples, sample_f, P_queries):
-    DO_K_MEDIANS = False
-    if DO_K_MEDIANS:
-        pass
-    else:
-        all_lines = np.asarray([l for l_set in L for l in l_set])
-        all_p, all_d = unpack_lines(all_lines)
-        p_min = np.min(all_p - 100 * all_d, axis=0)
-        p_max = np.max(all_p + 100 * all_d, axis=0)
-        (x_min, y_min), (x_max, y_max) = p_min, p_max
-        epsilons = []
-        smallest = 1e-7
-    
+    # TODO: Add k-median queries; Unite with evaluation of colored points
     def evaluate_sample():
-        Lm, Wm = sample_f(L, sensitivities, size=size)
-        x_rnd = np.random.uniform(x_min, x_max, (k, 1))
-        y_rnd = np.random.uniform(y_min, y_max, (k, 1))
-        p_rnd = np.hstack((x_rnd, y_rnd))
-        cost = cost_set_to_points(L, np.ones(len(L)), p_rnd)
-        cost_coreset = cost_set_to_points(Lm, Wm, p_rnd)
-        if cost > smallest:
-            epsilon = np.abs(cost - cost_coreset) / cost
+       Lm, Wm = sample_f(L, sensitivities, size=size)
+       idx = np.random.choice(len(P_queries), size=k)
+       p_rnd = np.asarray(P_queries)[idx]       
+       cost = cost_set_to_points(L, np.ones(len(L)), p_rnd)
+       cost_coreset = cost_set_to_points(Lm, Wm, p_rnd)
+       smallest = 1e-5
+       if cost > smallest:
+           epsilon = np.abs(cost - cost_coreset) / cost
+       else:
+           epsilon = 0   
+       return epsilon
+    epsilons = []
+    if len(P_queries) == 0:
+        print("Building set of optimal queries")
+        n_lines = n_samples * 10
+        if len(L) > n_lines:
+            idx = np.random.choice(len(L), n_lines, replace=False)
+            L_subset = L[idx]
         else:
-            epsilon = 0   
-        return epsilon
+            L_subset = L
+        P_queries.extend(
+            [p for idx, p in enumerate_set_of_sets_centroids(L_subset)])
+        print("Finished building set of optimal queries")
     
     epsilons = Parallel()([
         delayed(evaluate_sample)() for i in range(n_samples)])
-    '''
     block_size = 10
     epsilons = [np.max(epsilons[i:i+block_size]) 
                 for i in range(0, len(epsilons), block_size)]
-    '''
     return epsilons, np.mean(epsilons), np.std(epsilons)
 
 
@@ -307,7 +311,7 @@ def evaluate_colored_points(L, sensitivities, size, k, n_samples, sample_f,
             P_queries = L
     
     epsilons = []
-    smallest = 1e-7
+    smallest = 1e-5
     for i in range(n_samples):
         Lm, Wm = sample_f(L, sensitivities, size=size)
         if DO_COMPLETE_RANDOM:
@@ -315,8 +319,8 @@ def evaluate_colored_points(L, sensitivities, size, k, n_samples, sample_f,
             color_rnd = np.random.randint(color_min, color_max + 1, (k, 1))
             p_rnd = np.hstack((coordinates_rnd, color_rnd))
         else:
-            idx = np.random.randint(len(P_queries))
-            p_rnd = np.asarray(P_queries[idx])
+            idx = np.random.choice(len(P_queries), size=k)
+            p_rnd = np.asarray(P_queries)[idx]
         cost = cost_set_to_points(L, np.ones(len(L)), p_rnd,
                                   dist_f=dist_colored_points_min_set_to_set)
         cost_coreset = cost_set_to_points(Lm, Wm, p_rnd,

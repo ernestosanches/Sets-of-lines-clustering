@@ -1,7 +1,7 @@
 import numpy as np
 import pandas as pd
 from functools import partial
-from utils import pack_colored_points, pack_lines
+from utils import unpack_lines, pack_lines, pack_colored_points
 from sklearn.datasets import fetch_kddcup99, fetch_covtype
 
 from text import load_text_data
@@ -10,7 +10,7 @@ from text import load_text_data
 
 def generate_points(n):
     mu = np.random.normal(0, 5, 2)
-    P = np.random.multivariate_normal(mu + np.array([100, 0]), 
+    P = np.random.multivariate_normal(mu + np.array([100, 10]), 
                                       np.eye(2) * 2, int(n * 1/100))
     Q = np.random.multivariate_normal([0,0], np.array([[5,0],[0,1]]) * 5, 
                                       (n - len(P)) // 2)
@@ -195,14 +195,7 @@ def generate_set_of_sets_of_lines_reconstruction(
     return L
 
 
-if __name__ == "__main__":
-    ff = lambda return_X_y: (np.arange(16).reshape((8,2)), 0)
-    aa = generate_set_of_sets_of_lines_reconstruction(8,4, ff, [0], [1])
-
-
-
-
-def generate_set_of_sets_of_lines_synthetic(n, m, variant=1):
+def generate_set_of_sets_of_lines_synthetic_random(n, m, variant=1):
     if variant == 1:
         L_set = np.concatenate([
             np.expand_dims(generate_set_of_lines(
@@ -217,6 +210,19 @@ def generate_set_of_sets_of_lines_synthetic(n, m, variant=1):
         L_set[:, 1, 2:4] = np.dot(L_set[:, 0, 2:4], rotation.T)
     return L_set
 
+def generate_set_of_sets_of_lines_synthetic_perpendicular(n, m):
+    p_set = generate_colored_points_sets_synthetic_random(n, m)[:, :, :-1]
+    d_set = np.zeros_like(p_set)
+    d_set[:, :, 0] = np.random.randint(0, 2, size=(n, m))
+    d_set[:, :, 1] = 1 - d_set[:, :, 0]
+    L_set = np.concatenate((p_set, d_set), axis=-1)
+    return L_set
+
+def normalize_lines(L):
+    ''' Sets direction vectors to be of unit length '''
+    p, d = unpack_lines(L)
+    d = d / np.linalg.norm(d, axis=-1, keepdims=True)
+    return pack_lines(p, d)
 
 ############################################################
 ### Wrapper function to generate a given dataset by name ###
@@ -225,11 +231,12 @@ from parameters import Datasets
 
 def generate_data_set_of_sets(n, m, data_type):
     generate_fs = {
-        Datasets.POINTS_SYNTHETIC : generate_colored_points_sets_synthetic_random,
+        Datasets.POINTS_RANDOM : generate_colored_points_sets_synthetic_random,
         Datasets.POINTS_FLOWER : generate_colored_points_sets_synthetic_flower,
         Datasets.POINTS_REUTERS : generate_colored_points_sets_reuters,
         Datasets.POINTS_CLOUD : generate_colored_points_sets_3d_cloud,
-        Datasets.LINES_SYNTHETIC : generate_set_of_sets_of_lines_synthetic,
+        Datasets.LINES_RANDOM : generate_set_of_sets_of_lines_synthetic_random,
+        Datasets.LINES_PERPENDICULAR : generate_set_of_sets_of_lines_synthetic_perpendicular,
         Datasets.LINES_COVTYPE : partial(
             generate_set_of_sets_of_lines_reconstruction,
             fetch_data_f=fetch_covtype, 
@@ -241,4 +248,7 @@ def generate_data_set_of_sets(n, m, data_type):
         #Datasets.LINES_TRIANGULATION : None,        
         }
     generate_f = generate_fs[data_type]
-    return generate_f(n, m)
+    data = generate_f(n, m)
+    if data_type in Datasets.DATASETS_LINES:
+        data = normalize_lines(data)
+    return data

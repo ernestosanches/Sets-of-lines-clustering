@@ -26,18 +26,21 @@ def _draw_sensitivities(P, sensitivities, data_type, offset):
         assert False, "Incorrect data type: {}".format(data_type)
 
 def visualize_coreset_sensitivities(P, sensitivities, k, data_type, 
-                                    apply_log=False, feature_offset=0):
+                                    apply_log=False, feature_offset=0,
+                                    mul=None):
+    if mul is None:
+        mul = 1 #if data_type in Datasets.DATASETS_POINTS else 10
     if apply_log:
         sensitivities = np.log(sensitivities)
     else:
-        MUL = 1
-        sensitivities = np.minimum(MUL * sensitivities, 1)
+        sensitivities = np.minimum(mul * sensitivities, 1)
+        
     n, m, d = P.shape
     plt.figure(); 
     plt.title("{}: {}, n = {}, m = {}, k = {}".format( 
         data_type,
         "Log sensitivities" if apply_log 
-            else "Sensitivities{}".format(" * {}".format(MUL) if MUL != 1
+            else "Sensitivities{}".format(" * {}".format(mul) if mul != 1
                                           else ""), 
         n, m, k))
     _draw_sensitivities(P, sensitivities, data_type, feature_offset)
@@ -64,10 +67,11 @@ def visualize_points_colors(P, k, data_type, feature_offset=0):
     plt.xlabel("X")
     plt.ylabel("Y")
 
-def visualize_coreset(P, sensitivities, k, data_type, feature_offset=0):
+def visualize_coreset(P, sensitivities, k, data_type, feature_offset=0, 
+                      mul=None):
     for apply_log in (False, True):
         visualize_coreset_sensitivities(
-            P, sensitivities, k, data_type, apply_log, feature_offset)
+            P, sensitivities, k, data_type, apply_log, feature_offset, mul)
     if data_type in Datasets.DATASETS_POINTS:
         visualize_points_colors(P, k, data_type, feature_offset)
         d = P.shape[-1]

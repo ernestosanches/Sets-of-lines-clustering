@@ -90,32 +90,35 @@ def enumerate_set_of_sets(P):
 ''' Geometrical functions '''
 
 def closest_point_to_two_lines(l1, l2):
-    ''' Triangulation: finding closest points to two lines.
-        Currently implemented for 2D for speed and easiness. 
-        TODO: generalize to n-dimensions 
-    '''
-    def line_vector_to_cartesian(bx, by, mx, my):
-        a = my / mx
-        b = -1
-        c = a * bx - by
-        return a, b, c
-    (p1x, p1y), (d1x, d1y) = p1, d1 = unpack_lines(l1)
-    (p2x, p2y), (d2x, d2y) = p2, d2 = unpack_lines(l2)
-    if np.all(d1 == d2) or np.all(d1 == -d2):
-        return (p1 + p2) / 2 # parallel
+    ''' Triangulation: finding closest points to two lines. '''
+    p1, d1 = unpack_lines(l1)
+    p2, d2 = unpack_lines(l2)
+    if np.isclose(np.abs(d1 @ d2), 1):
+        # parallel lines, returning any middle point inbetween
+        return (p1 + p2) / 2
     else:
-        a1, b1, c1 = line_vector_to_cartesian(p1x, p1y, d1x, d1y)
-        a2, b2, c2 = line_vector_to_cartesian(p2x, p2y, d2x, d2y)
-        return np.asarray([(c1 * b2 - b1 * c2) / (a1 * b2 - b1 * a2),
-                           (a1 * c2 - c1 * a2) / (a1 * b2 - b1 * a2)])
-        
-         
+        # intersecting or skew lines, returning the point with minimal distance
+        d = p1.shape[-1]
+        I = np.eye(d)
+        diff1 = I - np.outer(d1, d1)
+        diff2 = I - np.outer(d2, d2)
+        result = np.linalg.inv(diff1 + diff2) @ (diff1 @ p1 + diff2 @ p2)
+        return result
     
 def enumerate_set_of_sets_centroids(L):
     ''' Implementation of Centroid Set algorithm from Y. Marom and D. Feldman, 
         k-Means Clustering of Lines for Big Data 
         Enumerates all centroids given set of sets of lines. '''
     idx = 0
+    L_all = L.reshape((-1, L.shape[-1]))
+    for element1 in L_all:
+        for element2 in L_all:
+            if np.any(element1 != element2):
+                p = closest_point_to_two_lines(element1, element2)
+                yield idx, p
+                idx += 1
+
+    '''
     for subset in L:
         if len(subset) == 1:
             element = subset[0]
@@ -129,7 +132,8 @@ def enumerate_set_of_sets_centroids(L):
                         p = closest_point_to_two_lines(element1, element2)
                         yield idx, p
                         idx += 1
-
+    '''
+    
 ''' Implementation of the "closest" operation '''
 
 def closest(P, B, gamma=0, dist_f=dist_points, n_closest=None, 

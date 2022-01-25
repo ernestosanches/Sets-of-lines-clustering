@@ -10,17 +10,21 @@ if __name__ == "__main__":
     if not path.exists("results"):
         mkdir("results")
     # parameters
-    n = 2000
+    n = 1000
     m = 1
     k = 1
-    n_samples = 30
+    n_samples = 50
     do_lines = True
     if do_lines:
-        data_types = [Datasets.LINES_KDDCUP] 
-    else: 
-        data_types = [#Datasets.POINTS_CLOUD,
+        data_types = [#Datasets.LINES_RANDOM
+                      #Datasets.LINES_PERPENDICULAR,
+                      #Datasets.LINES_KDDCUP,
+                      Datasets.LINES_COVTYPE,
+                      ]
+    else:
+        data_types = [Datasets.POINTS_CLOUD,
                       #Datasets.POINTS_REUTERS,
-                      #Datasets.POINTS_SYNTHETIC
+                      #Datasets.POINTS_RANDOM
                      ]
     
     for data_type in data_types:

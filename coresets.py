@@ -70,8 +70,8 @@ def intersect_spheres(L, B):
 
     result_lists = [intersect_sphere(l_set, b, color) 
                     for l_set, (color, b) in zip(L, enumerate(B))]
-    return np.asarray(list(chain.from_iterable(result_lists)))
-    
+    result = np.asarray(list(chain.from_iterable(result_lists)))
+    return result
 
 ''' Helper functions ''' 
 
@@ -106,6 +106,7 @@ def CS_dense(P, k, m_CS=2, tau=1/20., k_closest=2):
     P_prev = P
     delta = tau
     stopCondition = False
+    P_prev_size_prev = len(P)
     for r in range(k_closest):
         if stopCondition:
             break
@@ -129,7 +130,9 @@ def CS_dense(P, k, m_CS=2, tau=1/20., k_closest=2):
             #                             proj_hat_colored_point(P, B_prev), 
             #                             P_hat_closest)])
             B_prev.append(b)       
-            stopCondition = len(P_prev) <= 1
+            stopCondition = ((len(P_prev) <= 1) or 
+                             (len(P_prev) == P_prev_size_prev))
+            P_prev_size_prev = len(P_prev)
             print("r={}, l={}, P_hat_closest: {}, P_prev: {}".format(
                 r, l, len(P_hat_closest), len(P_prev)))
     return P_prev, np.asarray(B_prev)
@@ -148,8 +151,8 @@ def Grouped_sensitivity(L, B, k, k_CS=2, tau=1/20., k_closest=2):
     if 1:#while len(P_m) > b: 
         P_m, B_m = CS_dense(P_L, k_CS, tau=tau, k_closest=k_closest)
         for P in P_m:
-            s[to_tuple(P)] = b / len(P_m) # IS IT ALWAYS LESS THAN 1??
-        P_L = [P for P in P_L if not set_in_setofsets(P, P_m)] # TODO
+            s[to_tuple(P)] = b / len(P_m) 
+        P_L = [P for P in P_L if not set_in_setofsets(P, P_m)]
         print("Grouped sensitivity: len(P_m) = {}, 2 * k_CS = {}".format(
               len(P_m), b))
 
@@ -173,37 +176,17 @@ def LS_dense(L, k, k_closest=None):
         b, _ = median_line_sets_to_points(L_prev_hat, k, delta) # TODO: cache m**2
         L_hat_closest, _ = closest_line_sets_to_points(
             L_prev_hat, [b], (1 - tau) / k_closest)
-        # TODO: set_in_setofsets
-        
-               
         L_prev = np.asarray([
             L for L in L_prev if isin_all(
                 proj_hat_line(L, B_prev), L_hat_closest)])
-                                 
-        #                     if set_in_setofsets(
-        #                             proj_hat_colored_point(P, B_prev), 
-        #                             P_hat_closest)])
-                
-        #L_prev = np.asarray([L for L in L_prev 
-        #          if set_in_setofsets(proj_hat_line(L, B_prev),
-        #                              L_hat_closest)])
-        
-        
-        
         B_prev.append(b)            
         print("i={}, L_hat_closest: {}, L_prev: {}".format(
             i, len(L_hat_closest), len(L_prev)))
     
-    
-    if len(L_prev) == 1: #64: # Grouped sensitivity would return whole set #float("inf"):
+    if len(L_prev) == 1:
         return L_prev, np.asarray(B_prev)
-
-    
-    #L_prev = np.asarray(L)
-    #B_prev = L_prev[0, :, :2]
     
     L_new = np.asarray([project_line(L, B_prev) for L in L_prev])
-    #L_new = L_prev
     
     sensitivities, _, _ = Grouped_sensitivity(L_new, B_prev, k)
     #sensitivities = np.asarray([s[L_idx] for L_idx, L in enumerate(L_new)])
@@ -274,7 +257,7 @@ def coreset_sample_biased(L, sensitivities, size):
 
     M_idx_in_idx = np.random.choice(
         np.arange(len(M_idx_normal)), size=size - len(M_idx_big), 
-        p=p_sampling, replace=True) # TODO: should be true by theory
+        p=p_sampling, replace=True) 
     M_idx_filtered = M_idx_normal[M_idx_in_idx]
     
     p_additional = p_sampling[M_idx_in_idx]
