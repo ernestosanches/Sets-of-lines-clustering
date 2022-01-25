@@ -6,7 +6,7 @@ from parameters import Datasets
 from coresets import coreset_sample
 from visualization import visualize_coreset
 from evaluation import (
-    test_points_median, test_lines_median, test_point_sets,
+    test_points_median, test_lines_median, test_lines_closest,
     test_colored_points_median, test_colored_point_sets_to_sets_median,
     test_colored_point_sets_to_points_median, test_cs_dense,
     get_grouped_sensitivity, test_grouped_sensitivity, get_ls_dense, 
@@ -18,7 +18,6 @@ def test_basic():
     ''' Testing basic algorithms '''
     test_points_median()
     test_lines_median()  
-    P, Q, C = test_point_sets() 
     P, Q, C = test_colored_points_median()
     P, Q, C = test_colored_point_sets_to_sets_median()
     P, Q, C = test_colored_point_sets_to_points_median()
@@ -97,3 +96,13 @@ def run_coreset_set_of_sets(n, m, k, sizes, data_type, n_samples):
     evaluate_coreset(L, k, sensitivities, evaluate_f, sizes, data_type, 
                      n_samples)
     return L, sensitivities
+
+if __name__ == "__main__":
+    pass
+    #test_points_median()
+    #test_lines_closest()  
+    #test_lines_median()  
+    #P, Q, C = test_colored_points_median()
+    #P, Q, C = test_colored_point_sets_to_sets_median()
+    #P, Q, C = test_colored_point_sets_to_points_median()
+    

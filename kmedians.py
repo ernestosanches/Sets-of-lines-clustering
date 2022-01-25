@@ -13,8 +13,7 @@ def kmedians(P, k, epsilon = 0.01, delta=1/20.0,
              centroids_init_f=random_init,
              centroids_init=None,
              draw_f=draw_point_set, draw_centroids_f=None,
-             dist_f=dist_points, enumerate_f=enumerate,
-             dist_to_set_f=None):
+             dist_f=dist_points, enumerate_f=enumerate):
     def find_assignment(centroids):
         groups = [[] for i in range(k)]
         for p in P:
@@ -34,7 +33,7 @@ def kmedians(P, k, epsilon = 0.01, delta=1/20.0,
             if len(group) == 0:
                 continue
             centroid, cost = robust_median(group, k, delta, dist_f, 
-                                           enumerate_f, dist_to_set_f)
+                                           enumerate_f) #, dist_to_set_f)
             centroids.append(centroid)
             costs += cost
         return np.sum(costs), centroids
@@ -80,7 +79,6 @@ if __name__ == "__main__":
                                draw_centroids_f=draw_colored_point_set,
                                dist_f=dist_colored_points_min_set_to_point,
                                enumerate_f=enumerate_set_of_sets,
-                               dist_to_set_f=dist_colored_points_min_p_to_set,
                                centroids_init_f=centroids_set_init,
                                #centroids_init=np.array(
                                #    [[0, 10,0], [0,-10,1], [100,10,0], [100,-10,1]])

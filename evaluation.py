@@ -5,10 +5,10 @@ import numpy as np
 from matplotlib import pyplot as plt
 from joblib import Parallel, delayed
 from utils import (pack_colored_points, pack_lines,
-                   unpack_colored_points, unpack_lines)
+                   unpack_colored_points)
 from median import (
     robust_median, recursive_robust_median,
-    closest_lines, closest_points, dist_points,
+    closest_lines, closest_points, dist_points, dist_lines,
     closest_point_sets, dist_colored_points, 
     dist_lines_min_set_to_set, closest_colored_points, 
     closest_colored_point_sets, dist_colored_points_min_set_to_set,
@@ -67,8 +67,8 @@ def test_colored_points_median(n=2000):
     draw_colored_points(P, Q, C, "Q = Median(P); C = Closest(P, Q)")
     return P, Q, C
 
-def test_colored_point_sets_to_sets_median(n=50, m=3):
-    P = generate_data_set_of_sets(n, m, Datasets.POINTS_SYNTHETIC)
+def test_colored_point_sets_to_sets_median(n=200, m=3):
+    P = generate_data_set_of_sets(n, m, Datasets.POINTS_RANDOM)
     gamma = 1/5.0
     k = 10
     do_recursive=False
@@ -86,7 +86,7 @@ def test_colored_point_sets_to_sets_median(n=50, m=3):
     return P, Q, C
 
 def test_colored_point_sets_to_points_median(n=20, m=3):
-    P = generate_data_set_of_sets(n, m, Datasets.POINTS_SYNTHETIC)
+    P = generate_data_set_of_sets(n, m, Datasets.POINTS_RANDOM)
     gamma = 1/5.0
     k = 10
     do_recursive=False
@@ -100,32 +100,40 @@ def test_colored_point_sets_to_points_median(n=20, m=3):
             P, k, delta=1/10,
             dist_f=dist_colored_points_min_set_to_point,
             enumerate_f=enumerate_set_of_sets,
-            dist_to_set_f=dist_colored_points_min_p_to_set)
-    Q = np.expand_dims(center, axis=[0]) # set of points  from single point
+            )
+    Q = np.expand_dims(center, axis=[0]) # set of points from single point
     C, cost = closest_colored_point_sets_to_points(P, Q, gamma)
     Q = np.expand_dims(Q, axis=[0]) # set of sets from set of points
     draw_colored_point_sets_all(P, Q, C, "Q = Median(P); C = Closest(P, Q)")
     return P, Q, C
 
-def test_lines_median(n=100):
+def test_lines_closest(n=200):
     L = generate_set_of_lines(n)
     gamma = 1/5.0    
-    Q = np.array([[-1,-1], [1,1]])
+    Q = np.array([10,10])
     C, cost = closest_lines(L, Q, gamma)
-    draw_lines(L, Q, C, "Q = [[-1,-1], [1,1]]; C = closest(L, Q)")
-    
-def test_point_sets():
-    n=100
-    P = generate_points_sets(n)
-    plt.figure()
+    draw_lines(L, Q, C, "Q = {}; C = closest(L, Q)".format(list(Q)))
+    return L, Q, C
+
+def test_lines_median(n=100):
+    L = generate_set_of_lines(n)
     gamma = 1/5.0
-    Q = np.asarray([(np.array([-1,-1]), np.array([1,1]))])
-    C, cost = closest_point_sets(P, Q, gamma)
-    #draw_lines(L, Q, C, "Q = [[-1,-1], [1,1]]; C = closest(L, Q)")
-    draw_lines_from_points(P, color="blue")
-    draw_lines_from_points(C, color="orange")
-    draw_lines_from_points(Q, color="green", s=5)
-    return P, Q, C
+    k = 3
+    do_recursive=True
+    if do_recursive:
+        Q, center, cost_med = recursive_robust_median(
+            L, k, tau=1/10, delta=1/10, dist_f=dist_lines,
+            enumerate_f=enumerate_set_of_sets_centroids)
+    else:
+        center, cost_med = robust_median(
+            L, k, delta=1/10, dist_f=dist_lines, 
+            enumerate_f=enumerate_set_of_sets_centroids)
+        Q = np.array(center)[np.newaxis, :]
+    Q = np.expand_dims(center, axis=0) # single point
+    C, cost = closest_lines(L, Q, gamma)
+    draw_lines(L, Q, C, "Q = robust_median(L); C = closest(L, Q)")
+    return L, Q, C
+
 
 ''' Testing functions for main algorithms from the paper ''' 
 
@@ -284,7 +292,6 @@ def evaluate_colored_points(L, sensitivities, size, k, n_samples, sample_f,
                     draw_centroids_f=draw_colored_point_set,
                     dist_f=dist_colored_points_min_set_to_point,
                     enumerate_f=enumerate_set_of_sets,
-                    dist_to_set_f=dist_colored_points_min_p_to_set,
                     centroids_init_f=centroids_set_init,
                     #centroids_init=np.array(
                     #    [[0, 10,0], [0,-10,1], [100,10,0], [100,-10,1]])

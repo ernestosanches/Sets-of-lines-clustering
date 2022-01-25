@@ -60,17 +60,20 @@ def generate_set_of_lines(n, offset=np.zeros((1, 2)), variant=2):
         size = n//50
         c = np.repeat(offset, size, axis=0)
         d = np.hstack([3 * np.ones((size, 1)), np.random.normal(0, 1, size=(size, 1))])
+        d = scale(d)
         print("c,d:", c.shape, d.shape)
         P = pack_lines(c, d)    
     
         size = n - n//50
         c = np.repeat(offset, size, axis=0)
         d = np.hstack([np.random.normal(0, 0.5, size=(size, 1)), 3 * np.ones((size, 1))])
+        d = scale(d)
         Q = pack_lines(c, d)    
         return np.vstack((P, Q))
     else:
         c = generate_points(n) + offset
         d = generate_points(n)
+        d = scale(d)
         print(d.shape)
         #d = np.hstack([np.random.normal(0, 0.03, size=(n, 1)), 0.1 * np.ones((n, 1))])
         #print(d.shape)
@@ -197,13 +200,12 @@ def generate_set_of_sets_of_lines_reconstruction(
 
 
 def generate_set_of_sets_of_lines_synthetic_random(n, m, variant=1):
-    if variant == 1:
-        L_set = np.concatenate([
-            np.expand_dims(generate_set_of_lines(
-                n, offset=np.random.normal(0, 100, size=(1, 2)) * np.array([1, 0])),
-                axis=1)
-            for i in range(m)], axis=1)    
-    else:
+    L_set = np.concatenate([
+        np.expand_dims(generate_set_of_lines(
+            n, offset=np.random.normal(0, 100, size=(1, 2)) * np.array([1, 0])),
+            axis=1)
+        for i in range(m)], axis=1)    
+    if variant == 2:
         a = np.pi/12
         sina = np.sin(a)
         cosa = np.cos(a)

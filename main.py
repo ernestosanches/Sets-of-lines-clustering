@@ -10,25 +10,26 @@ if __name__ == "__main__":
     if not path.exists("results"):
         mkdir("results")
     # parameters
-    n = 1000
-    m = 1
-    k = 1
-    n_samples = 50
+    n = 1000 # total data size
+    m = 1    # size of each set in the data
+    k = 2    # k centers
+    n_samples = 50 # how many times experiment for each graph point is repeated
     do_lines = True
     if do_lines:
         data_types = [#Datasets.LINES_RANDOM
                       Datasets.LINES_PERPENDICULAR,
                       #Datasets.LINES_KDDCUP,
+                      
                       #Datasets.LINES_COVTYPE,
                       ]
     else:
-        data_types = [Datasets.POINTS_CLOUD,
-                      #Datasets.POINTS_REUTERS,
+        data_types = [#Datasets.POINTS_CLOUD,
+                      Datasets.POINTS_REUTERS,
                       #Datasets.POINTS_RANDOM
                      ]
     
     for data_type in data_types:
-        print("\n{}: n = {}, m = {}, k = {}".format(
+        print("\nExperiment on {}: n = {}, m = {}, k = {}".format(
             data_type, n, m, k))
         sizes = np.logspace(1, 4, 10, dtype=int)
         sizes = sizes[sizes < n]

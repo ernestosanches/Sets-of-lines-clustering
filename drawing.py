@@ -40,24 +40,25 @@ def draw_colored_point_sets(P_set, label=None, s=2, linecolor="blue",
 def draw_colored_point_sets_all(P, Q, C, title):
     plt.figure()
     draw_colored_point_sets(P, "P", linecolor="blue")
-    draw_colored_point_sets(Q, "Q", s=5, linealpha=0.4, linecolor="green")
-    draw_colored_point_sets(C, "C", s=2, linealpha=0.4, linecolor="orange")
+    draw_colored_point_sets(C, "C", s=10, linealpha=0.4, linecolor="orange")
+    draw_colored_point_sets(Q, "Q", s=100, linealpha=0.4, linecolor="green")
     plt.title(title)
     plt.legend()    
         
 def draw_points(P, Q, C, title):
     plt.figure()
-    draw_point_set(P, "P")
+    draw_point_set(P, "P", s=2)
+    draw_point_set(C, "C", s=4)
     draw_point_set(Q, "Q", s=100)
-    draw_point_set(C, "C")
     plt.title(title)
     plt.legend()    
     
 def draw_colored_points(P, Q, C, title):   
     plt.figure()
     draw_colored_point_set(P, "P")
+    draw_colored_point_set(C, "C", s=20)
     draw_colored_point_set(Q, "Q", s=100)
-    draw_colored_point_set(C, "C", s=10)
+    plt.title(title)
     plt.legend()    
 
 def draw_lines_from_points(points1, points2, color=None, s=2, alpha=1):
@@ -91,10 +92,12 @@ def draw_line_set(lines, color, s=2):
     draw(c, d, s, idx_emph, 10)
 
 def draw_lines(L, Q, C, title):
+    if Q.ndim == 1:
+        Q = np.expand_dims(Q, axis=0)
     plt.figure()
     draw_line_set(L, color="blue")
     draw_point_set(Q, color="orange", s=100)
-    draw_line_set(C, color="green")
+    draw_line_set(C, color="green", s=4)
     plt.title(title)
 
 def draw_lines_set_of_sets(L, widths=None):
@@ -138,4 +141,9 @@ def plot_graphs(epsilons, n, m, k, n_samples, data_type):
     #plt.yscale("log")
     plt.ylim(0, 1.1 * max(epsilon_mus.max(), epsilon_random_mus.max()))
     plt.legend()
+
+# TODO:  REAL DATA LINES ---   USE ONLY discrete feat. with small num of vals.
+
+
+
 

@@ -59,7 +59,7 @@ def dist_colored_points_min_set_to_set(P, Q):
 def dist_lines_min_set_to_point(P, Q):
     return dist_min_set_to_point(P, Q, dist_lines)
 def dist_lines_min_p_to_set(P, Q): # TODO
-    return dist_lines_min_set_to_point(Q, P) #dist_colored_points_min_set_to_point(Q, P)
+    return dist_lines_min_set_to_point(Q, P) # Note Q, P --> Q is set P is pt.
 def dist_lines_min_set_to_set(P, Q):
     return dist_min_set_to_set(P, Q, dist_lines)
 
@@ -70,8 +70,9 @@ def dist_p_to_set(p, S, dist_f=dist_points):
         if cost_curr < cost:
             cost = cost_curr
     return cost
+
 def sum_dist_p_to_set(p, S, dist_f=dist_points):
-    cost = sum(dist_f(p, q) for q in S)
+    cost = sum(dist_f(q, p) for q in S) # Note Q, P --> Q is set P is pt.
     return cost
 
 def dist_set_to_set(P, Q, dist_f=dist_points):
@@ -109,6 +110,7 @@ def enumerate_set_of_sets_centroids(L):
     ''' Implementation of Centroid Set algorithm from Y. Marom and D. Feldman, 
         k-Means Clustering of Lines for Big Data 
         Enumerates all centroids given set of sets of lines. '''
+    
     idx = 0
     L_all = L.reshape((-1, L.shape[-1]))
     for element1 in L_all:
@@ -196,44 +198,32 @@ def closest_line_sets_to_points(
 ''' Median computation algorithms '''
 
 def median_exhaustive(P, gamma, 
-                      dist_f=dist_points, enumerate_f=enumerate,
-                      dist_to_set_f=None):
+                      dist_f=dist_points, enumerate_f=enumerate):
     ''' Finds an approximation to 1-median using exhaustive search.
         dist_f - basic distance function of the space
-        dist_to_set_f - wraper of the distance function for sets
         enumerate_f - enumeration function for possible solutions, either
                       returning sub-elements from P or an approximation
                       such as the "centroid set" for lines '''
-    if dist_to_set_f is None:
-        dist_to_set_f = dist_f
     cost = float("inf")
     center = None
     
     def get_cost_from_center(c):
         closest_c, _ = closest(P, [c], gamma, dist_f)
-        cost_curr = sum_dist_p_to_set(c, closest_c, dist_to_set_f)
+        cost_curr = sum_dist_p_to_set(c, closest_c, dist_f=dist_f)
         return cost_curr, c
-     
+    
     result = Parallel()([
         delayed(get_cost_from_center)(c) for _, c in enumerate_f(P)])
-    cost, center = sorted(result, key=lambda x: x[0])[0]
     '''
-    for idx, c in enumerate_f(P):
-        closest_c, _ = closest(P, [c], gamma, dist_f)
-        cost_curr = sum_dist_p_to_set(c, closest_c, dist_to_set_f)
-        if center is None or cost_curr < cost:
-            cost = cost_curr
-            center = c
+    result = [
+        get_cost_from_center(c) for _, c in enumerate_f(P)]
     '''
-    
-    if cost < np.inf:
-        pass
-    
+    cost, center = sorted(result, key=lambda x: x[0])[0]    
     return center, cost
 
 def robust_median(P, k, delta=1/20.0, 
                   dist_f=dist_points, enumerate_f=enumerate,
-                  dist_to_set_f=None):
+                  ):
     ''' Implementation of a robust k-median algorithm. 
         Parameters meaning is same as in median_exhaustive '''
     b = 4 / (1-delta) # constant that can be found from proofs of the lemmas
@@ -246,24 +236,21 @@ def robust_median(P, k, delta=1/20.0,
         S = P
     q , cost = median_exhaustive(S, 15 / (16*k), 
                                  dist_f=dist_f, enumerate_f=enumerate_f,
-                                 dist_to_set_f=dist_to_set_f)
+                                 )
     return q, cost
 
 def recursive_robust_median(P, k, tau=1/10.0, delta=1/20.0, 
                             dist_f=dist_points, enumerate_f=enumerate,
-                            dist_to_set_f=None):
+                            ):
     ''' Implementation of the recursive robust k-median algorithm. 
         Parameters meaning is same as in median_exhaustive '''
     Q = P
-    #print("len(P):", len(P))
     for i in range(k):
-        #print("i = {}".format(i))
         q, _ = robust_median(Q, k, delta=delta, 
                              dist_f=dist_f, enumerate_f=enumerate_f,
-                             dist_to_set_f=dist_to_set_f) 
+                             ) 
         Q, cost = closest(Q, [q], (1 - tau) / (2 * k), 
                           dist_f=dist_f)
-        #print("len(Q): {}; cost: {}".format(len(Q), cost))
         if len(Q) == 1:
             break
     return Q, q, cost
@@ -280,13 +267,10 @@ def median_colored_point_sets(P, k=1, delta=1/20.0):
 def median_colored_point_sets_to_points(P, k=1, delta=1/20.0):
     return robust_median(P, k, delta, 
                          dist_f=dist_colored_points_min_set_to_point,
-                         enumerate_f=enumerate_set_of_sets,
-                         dist_to_set_f=dist_colored_points_min_p_to_set)
+                         enumerate_f=enumerate_set_of_sets)
 def median_lines(L, k=1, delta=1/20.0):
     return robust_median(L, k, delta, dist_lines)    
 def median_line_sets_to_points(L, k=1, delta=1/20.0):    
     return robust_median(L, k, delta, 
                          dist_f=dist_lines_min_set_to_point,
-                         enumerate_f=enumerate_set_of_sets_centroids,
-                         dist_to_set_f=dist_lines_min_p_to_set)
-    
+                         enumerate_f=enumerate_set_of_sets_centroids)
