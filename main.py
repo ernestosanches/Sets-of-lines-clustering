@@ -10,22 +10,23 @@ if __name__ == "__main__":
     if not path.exists("results"):
         mkdir("results")
     # parameters
-    n = 1000 # total data size
-    m = 1    # size of each set in the data
-    k = 2    # k centers
-    n_samples = 50 # how many times experiment for each graph point is repeated
-    do_lines = True
+    n = 10000 # total data size
+    m = 3    # size of each set in the data
+    k = 6 # k centers
+    n_samples = 100 # how many times experiment for each graph point is repeated
+    do_lines = False
     if do_lines:
-        data_types = [#Datasets.LINES_RANDOM
-                      Datasets.LINES_PERPENDICULAR,
+        data_types = [#Datasets.LINES_RANDOM,
+                      #Datasets.LINES_PERPENDICULAR,
                       #Datasets.LINES_KDDCUP,
-                      
                       #Datasets.LINES_COVTYPE,
                       ]
     else:
-        data_types = [#Datasets.POINTS_CLOUD,
+        data_types = [
+                      #Datasets.POINTS_RANDOM,
                       Datasets.POINTS_REUTERS,
-                      #Datasets.POINTS_RANDOM
+                      #Datasets.POINTS_COVTYPE,
+                      #Datasets.POINTS_CLOUD,
                      ]
     
     for data_type in data_types:

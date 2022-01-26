@@ -1,23 +1,34 @@
 import numpy as np
 import pandas as pd
-from os import path
 from matplotlib import pyplot as plt
+from matplotlib.colors import LinearSegmentedColormap
 from matplotlib import cm
+
 from drawing import draw_line_set
 from parameters import Datasets
 
+
+def _get_colormap():
+    '''return LinearSegmentedColormap.from_list(
+        "custom",
+        [(0.0, '#0000ff'), 
+         (1.0, '#cc0000')])
+    '''
+    return cm.jet
+
 def _draw_sensitivities(P, sensitivities, data_type, offset):
+    cmap = _get_colormap()
     def draw_points(P_set, s):
         #plt.axes().set_aspect('equal')
         for i in range(P_set.shape[1]):
             plt.scatter(P_set[:, i, 0 + offset], 
-                        P_set[:, i, 1 + offset], c=s, s=4)            
+                        P_set[:, i, 1 + offset], c=s, s=4, cmap=cmap)            
     def draw_lines(L_set, s):
         n, m, d2 = L_set.shape
         #plt.axes().set_aspect('equal')
         for i in range(n):
             L = L_set[i, :, :]
-            draw_line_set(L, color=cm.viridis(s[i]))
+            draw_line_set(L, color=cmap(s[i])[:3])
     if data_type in Datasets.DATASETS_POINTS:
         draw_points(P, sensitivities)
     elif data_type in Datasets.DATASETS_LINES:
@@ -44,7 +55,7 @@ def visualize_coreset_sensitivities(P, sensitivities, k, data_type,
                                           else ""), 
         n, m, k))
     _draw_sensitivities(P, sensitivities, data_type, feature_offset)
-    sm = plt.cm.ScalarMappable(cmap=cm.viridis, 
+    sm = plt.cm.ScalarMappable(cmap=cm.jet, 
                                norm=plt.Normalize(vmin=sensitivities.min(), 
                                                   vmax=sensitivities.max()))
     plt.colorbar(sm)
@@ -78,7 +89,8 @@ def visualize_coreset(P, sensitivities, k, data_type, feature_offset=0,
         if d >= 3+1:
             visualize_coreset_points_3d(P, sensitivities, data_type=data_type, 
                                         feature_offset=feature_offset)
-
+    plt.show()
+    plt.pause(0.001)
 
 ##################################
 # Outliers removal visualization #

@@ -2,16 +2,22 @@ import numpy as np
 import pandas as pd
 from functools import partial
 from utils import unpack_lines, pack_lines, pack_colored_points
-from sklearn.datasets import fetch_kddcup99, fetch_covtype
+from sklearn.datasets import fetch_kddcup99, fetch_covtype, fetch_california_housing
 from sklearn.preprocessing import scale
 
 from text import load_text_data
 
 ''' Helper dataset generation functions '''
 
-def generate_points(n):
+def generate_points(n, variant=1):
     mu = np.random.normal(0, 5, 2)
-    P = np.random.multivariate_normal(mu + np.array([100, 10]), 
+    if variant == 1:
+        p_offset = [100, 10]
+    elif variant == 2:
+        p_offset = [10000, 10]
+    elif variant == 3:
+        p_offset = [-30, 100]
+    P = np.random.multivariate_normal(mu + np.array(p_offset), 
                                       np.eye(2) * 2, int(n * 1/100))
     Q = np.random.multivariate_normal([0,0], np.array([[5,0],[0,1]]) * 5, 
                                       (n - len(P)) // 2)
@@ -59,7 +65,7 @@ def generate_set_of_lines(n, offset=np.zeros((1, 2)), variant=2):
     if variant == 1:
         size = n//50
         c = np.repeat(offset, size, axis=0)
-        d = np.hstack([3 * np.ones((size, 1)), np.random.normal(0, 1, size=(size, 1))])
+        d = np.hstack([- np.ones((size, 1)), 3 * np.random.normal(0, 1, size=(size, 1))])
         d = scale(d)
         print("c,d:", c.shape, d.shape)
         P = pack_lines(c, d)    
@@ -71,15 +77,11 @@ def generate_set_of_lines(n, offset=np.zeros((1, 2)), variant=2):
         Q = pack_lines(c, d)    
         return np.vstack((P, Q))
     else:
-        c = generate_points(n) + offset
-        d = generate_points(n)
+        c = generate_points(n, variant=2) + offset
+        d = generate_points(n, variant=3)
         d = scale(d)
-        print(d.shape)
-        #d = np.hstack([np.random.normal(0, 0.03, size=(n, 1)), 0.1 * np.ones((n, 1))])
-        #print(d.shape)
-        #d = d / np.linalg.norm(d, axis=-1)[:, np.newaxis]
         return pack_lines(c, d)
-
+        
 ''' 3D Point cloud processing functions'''
 
 def get_3d_cloud_path():
@@ -161,12 +163,44 @@ def generate_colored_points_sets_synthetic_random(n, m, variant=3):
                           for color, P in enumerate(point_groups)]
     return stack_point_sets(colored_points)
 
-
-def generate_set_of_sets_of_lines_reconstruction(
-        n, m, fetch_data_f, continuous_features, discrete_features):        
+def generate_colored_points_from_data(n, m, fetch_data_f):
+    assert(m==1)
     X, Y = fetch_data_f(return_X_y=True)
     X = X[np.random.choice(len(X), n, replace=False)]
-    #X = X[:, 4:6] # TODO: remove; use all dimensions
+    X = np.asarray(X, dtype=float)
+    X = scale(X)
+    X = pack_colored_points(X, np.zeros((n, 1)))
+    return np.expand_dims(X, axis=1)
+    
+def generate_set_of_sets_of_lines_reconstruction(
+        n, m, fetch_data_f, continuous_features, discrete_features,
+        project_2d=False):
+    assert(m==1)
+    X, Y = fetch_data_f(return_X_y=True)
+    X = X[np.random.choice(len(X), n, replace=False)]
+    if project_2d:
+        X = X[:, 9:11] # TODO: remove; use all dimensions
+    X = np.asarray(X, dtype=float)
+    X = scale(X)
+    
+    n, d = X.shape
+    
+    p_set = np.expand_dims(X, axis=1)
+    d_set = np.zeros((n, 1, d))
+    
+    direction_coordinates = np.random.randint(0, d, size=n)
+    d_set[np.arange(n), 0, direction_coordinates] = 1
+    L = np.concatenate((p_set, d_set), axis=-1)    
+    return L
+
+
+def generate_set_of_sets_of_lines_reconstruction_old(
+        n, m, fetch_data_f, continuous_features, discrete_features,
+        project_2d=True):        
+    X, Y = fetch_data_f(return_X_y=True)
+    X = X[np.random.choice(len(X), n, replace=False)]
+    if project_2d:
+        X = X[:, 9:11] # TODO: remove; use all dimensions
     X = np.asarray(X, dtype=float)
     X = scale(X)
     
@@ -202,9 +236,10 @@ def generate_set_of_sets_of_lines_reconstruction(
 def generate_set_of_sets_of_lines_synthetic_random(n, m, variant=1):
     L_set = np.concatenate([
         np.expand_dims(generate_set_of_lines(
-            n, offset=np.random.normal(0, 100, size=(1, 2)) * np.array([1, 0])),
-            axis=1)
+            n, offset=np.random.normal(0, 100, size=(1, 2)) * np.array([1, 0]),
+            variant=2), axis=1)
         for i in range(m)], axis=1)    
+    
     if variant == 2:
         a = np.pi/12
         sina = np.sin(a)
@@ -233,23 +268,32 @@ def normalize_lines(L):
 from parameters import Datasets
 
 def generate_data_set_of_sets(n, m, data_type):
+    real_data = fetch_covtype #fetch_california_housing
     generate_fs = {
         Datasets.POINTS_RANDOM : generate_colored_points_sets_synthetic_random,
         Datasets.POINTS_FLOWER : generate_colored_points_sets_synthetic_flower,
         Datasets.POINTS_REUTERS : generate_colored_points_sets_reuters,
         Datasets.POINTS_CLOUD : generate_colored_points_sets_3d_cloud,
+        Datasets.POINTS_COVTYPE : partial(
+            generate_colored_points_from_data,
+            fetch_data_f=real_data),
         Datasets.LINES_RANDOM : generate_set_of_sets_of_lines_synthetic_random,
         Datasets.LINES_PERPENDICULAR : generate_set_of_sets_of_lines_synthetic_perpendicular,
         Datasets.LINES_COVTYPE : partial(
             generate_set_of_sets_of_lines_reconstruction,
-            fetch_data_f=fetch_covtype, 
-            continuous_features=[0,1], discrete_features=[0,1]),
+            fetch_data_f=real_data, 
+            continuous_features=list(range(0,10)), 
+            discrete_features=list(range(10,54))),
+        }
+        
+    '''
         Datasets.LINES_KDDCUP : partial(
             generate_set_of_sets_of_lines_reconstruction,
             fetch_data_f=fetch_kddcup99, 
-            continuous_features=[0,1], discrete_features=[0,1]),
+            continuous_features=[6,7], discrete_features=[8,9]),
         #Datasets.LINES_TRIANGULATION : None,        
-        }
+    '''
+        
     generate_f = generate_fs[data_type]
     data = generate_f(n, m)
     if data_type in Datasets.DATASETS_LINES:

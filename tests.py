@@ -75,10 +75,10 @@ def evaluate_coreset(L, k, sensitivities, evaluate_f, sizes, data_type, n_sample
                          epsilon_random_mu, epsilon_random_sigma))
         epsilons_all.append((size, epsilon_all,
                              epsilon_all_random))
+    plot_graphs(epsilons, n, m, k, n_samples, data_type)
     pickle.dump(epsilons, open(
         "results/epsilons_{}_{}_{}_{}_{}.p".format(
             n, m, k, data_type, ctime()), "wb"))
-    plot_graphs(epsilons, n, m, k, n_samples, data_type)
 
 # TODO: remove global variables
 def run_coreset_set_of_sets(n, m, k, sizes, data_type, n_samples):
@@ -93,16 +93,23 @@ def run_coreset_set_of_sets(n, m, k, sizes, data_type, n_samples):
     
     visualize_coreset(L, sensitivities, k, data_type)
     
-    evaluate_coreset(L, k, sensitivities, evaluate_f, sizes, data_type, 
-                     n_samples)
+    if n_samples > 0:
+        evaluate_coreset(L, k, sensitivities, evaluate_f, sizes, data_type, 
+                         n_samples)
     return L, sensitivities
 
 if __name__ == "__main__":
-    pass
+    # Basic tests
     #test_points_median()
     #test_lines_closest()  
     #test_lines_median()  
     #P, Q, C = test_colored_points_median()
     #P, Q, C = test_colored_point_sets_to_sets_median()
     #P, Q, C = test_colored_point_sets_to_points_median()
-    
+    pass
+
+    #Cd, Qd = test_cs_dense()
+    #L, P, s_lines, P_L, s = get_grouped_sensitivity()
+    #test_grouped_sensitivity(L, P, s_lines, P_L, s)
+    Lm, Bm = get_ls_dense()
+    test_ls_dense(Lm, Bm)  

@@ -101,13 +101,14 @@ def CS_dense(P, k, m_CS=2, tau=1/20., k_closest=2):
     ''' P is (n, m)-ordered set. computes recursive robust median 
         Reduces data by ((1 - tau) / (4 * k)) ** m_CS '''
     m = len(P[0])
-    m_CS = m #min(m_CS, len(P[0]))
-    k_closest = min(k, 3) #min(k_closest, 4 * k)
+    m_CS = min(m_CS, len(P[0])) # TODO: check m_CS
+    k_closest = min(k, 2) #min(k_closest, 4 * k)
+    k_iterations = min(k, 2)
     P_prev = P
     delta = tau
     stopCondition = False
     P_prev_size_prev = len(P)
-    for r in range(k_closest):
+    for r in range(k_iterations):
         if stopCondition:
             break
         B_prev = []
@@ -120,7 +121,7 @@ def CS_dense(P, k, m_CS=2, tau=1/20., k_closest=2):
                                      for P in P_prev])
             b, _ = median_colored_point_sets_to_points(P_prev_hat, k, delta) 
             P_hat_closest, _ = closest_colored_point_sets_to_points(
-                P_prev_hat, [b], (1 - tau) / 4 * k)
+                P_prev_hat, [b], (1 - tau) / (2 * k_closest))
                 
             P_prev = np.asarray([
                 P for P in P_prev if isin_all(
@@ -157,7 +158,7 @@ def Grouped_sensitivity(L, B, k, k_CS=2, tau=1/20., k_closest=2):
               len(P_m), b))
 
     for q in P_L:
-        s[to_tuple(q)] = 1
+        s[to_tuple(q)] = 1.01
     s_lines = [np.sqrt(2) * s[to_tuple(P_all[idx])] 
                for idx, l in enumerate(L)]
     return np.asarray(s_lines), P_all, s
@@ -169,7 +170,7 @@ def LS_dense(L, k, k_closest=None):
     L_prev = L
     B_prev = []
     if k_closest is None:
-        k_closest = 4 * k
+        k_closest = 2 * k
     
     for i in range(m):
         L_prev_hat = np.asarray([proj_hat_line(L, B_prev) for L in L_prev])
@@ -214,11 +215,11 @@ def coreset(L, k, f_dense=LS_dense,
           len(L_m_plus_one), b))
         
     stopCondition = False
-    prevSize = float("inf")
+    #prevSize = float("inf")
     while not stopCondition: #len(L_0) > b:
         L_m_plus_one, B_m_plus_one = f_dense(L_0, k)
         currSize = len(L_m_plus_one)
-        stopCondition = currSize > prevSize * 2 or currSize <= b
+        stopCondition = currSize <= b # or  currSize > prevSize * 16 
         if not stopCondition:
             for L_set in L_m_plus_one:
                 s[hash_to_f(L_set)] = b / currSize
@@ -227,7 +228,7 @@ def coreset(L, k, f_dense=LS_dense,
             print("Coreset: len(L_m_plus_one) = {}, len(L_0) = {}; b = {}, s = {}, s+l = {}".format(
                   currSize, len(L_0), b, len(s), len(s) + len(L_0)))
             stopCondition = (len(L_0) <= b)
-            prevSize = currSize
+            #prevSize = currSize
     for L_set in L:
         L_hash = hash_to_f(L_set)
         if not L_hash in s:

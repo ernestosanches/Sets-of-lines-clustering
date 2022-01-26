@@ -39,7 +39,7 @@ def draw_colored_point_sets(P_set, label=None, s=2, linecolor="blue",
          
 def draw_colored_point_sets_all(P, Q, C, title):
     plt.figure()
-    draw_colored_point_sets(P, "P", linecolor="blue")
+    draw_colored_point_sets(P, "P", s=1, linecolor="blue")
     draw_colored_point_sets(C, "C", s=10, linealpha=0.4, linecolor="orange")
     draw_colored_point_sets(Q, "Q", s=100, linealpha=0.4, linecolor="green")
     plt.title(title)
@@ -78,11 +78,11 @@ def draw_line_set(lines, color, s=2):
             return a if set_alpha is None else set_alpha * a
         c, d, s = c[idx], d[idx], s[idx]
         draw_lines_from_points(c - 1 * d, c + 1 * d, color, s, 
-                               alpha=alpha(0.1))
+                               alpha=alpha(0.2))
         draw_lines_from_points(c - 5 * d, c + 5 * d, color, s, 
-                               alpha=alpha(0.05))
+                               alpha=alpha(0.1))
         draw_lines_from_points(c - 10 * d, c + 10 * d, color, s,
-                               alpha=alpha(0.02))
+                               alpha=alpha(0.05))
     c, d = unpack_lines(lines)
     if not isinstance(s, Iterable):
         s = np.full(len(lines), s)

@@ -228,7 +228,7 @@ def robust_median(P, k, delta=1/20.0,
         Parameters meaning is same as in median_exhaustive '''
     b = 4 / (1-delta) # constant that can be found from proofs of the lemmas
     n = len(P)
-    size = max(1, int(np.ceil(b * k**2 * np.log(1/delta)))) # 120 # TODO
+    size = np.clip(int(np.ceil(b * k**2 * np.log(1/delta))), 1, 100)
     if size < len(P):
         idx = np.random.choice(n, size=min(size, n), replace=True) 
         S = P[idx]

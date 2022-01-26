@@ -140,7 +140,7 @@ def test_lines_median(n=100):
 def test_cs_dense():
     n = 5000
     m = k = 2
-    P = generate_data_set_of_sets(n, m, Datasets.POINTS_SYNTHETIC)
+    P = generate_data_set_of_sets(n, m, Datasets.POINTS_RANDOM)
     Cd, Qd = CS_dense(P, k)
     Qd = np.expand_dims(Qd, axis=0) # single set to set of sets for drawing
     draw_colored_point_sets_all(P, Qd, Cd, "C, Q = CS_dense(P, k)")
@@ -177,7 +177,7 @@ def get_ls_dense():
     k = 2
     n = 1000
     m = 2
-    L = generate_data_set_of_sets(n, m, Datasets.LINES_SYNTHETIC)
+    L = generate_data_set_of_sets(n, m, Datasets.LINES_RANDOM)
     plt.figure()
     draw_set_of_sets_of_lines(L,s=1)
     Lm, Bm = LS_dense(L, k)
@@ -270,7 +270,7 @@ def evaluate_lines(L, sensitivities, size, k, n_samples, sample_f, P_queries):
     
     epsilons = Parallel()([
         delayed(evaluate_sample)() for i in range(n_samples)])
-    block_size = 10
+    block_size = n_samples // 10
     epsilons = [np.max(epsilons[i:i+block_size]) 
                 for i in range(0, len(epsilons), block_size)]
     return epsilons, np.mean(epsilons), np.std(epsilons)
