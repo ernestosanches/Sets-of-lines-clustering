@@ -14,7 +14,7 @@ def generate_points(n, variant=1):
     if variant == 1:
         p_offset = [100, 10]
     elif variant == 2:
-        p_offset = [10000, 10]
+        p_offset = [100, 10]
     elif variant == 3:
         p_offset = [-30, 100]
     P = np.random.multivariate_normal(mu + np.array(p_offset), 
@@ -172,14 +172,15 @@ def generate_colored_points_from_data(n, m, fetch_data_f):
     X = pack_colored_points(X, np.zeros((n, 1)))
     return np.expand_dims(X, axis=1)
     
-def generate_set_of_sets_of_lines_reconstruction(
+def generate_set_of_sets_of_lines_reconstruction_m_1_old(
         n, m, fetch_data_f, continuous_features, discrete_features,
         project_2d=False):
     assert(m==1)
     X, Y = fetch_data_f(return_X_y=True)
     X = X[np.random.choice(len(X), n, replace=False)]
     if project_2d:
-        X = X[:, 9:11] # TODO: remove; use all dimensions
+        assert(project_2d)
+        X = X[:, 0:2] # TODO: remove; use all dimensions
     X = np.asarray(X, dtype=float)
     X = scale(X)
     
@@ -194,13 +195,16 @@ def generate_set_of_sets_of_lines_reconstruction(
     return L
 
 
-def generate_set_of_sets_of_lines_reconstruction_old(
-        n, m, fetch_data_f, continuous_features, discrete_features,
-        project_2d=True):        
+def generate_set_of_sets_of_lines_reconstruction(
+        n, m, fetch_data_f,# continuous_features, discrete_features,
+        #project_2d=True
+        ):        
     X, Y = fetch_data_f(return_X_y=True)
     X = X[np.random.choice(len(X), n, replace=False)]
+    '''
     if project_2d:
         X = X[:, 9:11] # TODO: remove; use all dimensions
+    '''
     X = np.asarray(X, dtype=float)
     X = scale(X)
     
@@ -208,7 +212,7 @@ def generate_set_of_sets_of_lines_reconstruction_old(
     
     p_set = np.repeat(np.expand_dims(X, axis=1), m, axis=1)
     d_set = np.zeros((n, m, d))
-    
+    '''
     if d > 2:
         continuous_idxs = np.random.choice(continuous_features, n)
         discrete_idxs = np.random.choice(discrete_features, n)
@@ -217,12 +221,21 @@ def generate_set_of_sets_of_lines_reconstruction_old(
         discrete_idxs = 1 - continuous_idxs
         continuous_features = [0, 1]
         discrete_features = [0, 1]
+    '''
+    continuous_idxs = np.random.choice(np.arange(d), n)
+    discrete_idxs = np.random.choice(np.arange(d), n)
+    same_idx = (discrete_idxs == continuous_idxs)
+    while np.any(same_idx):
+        discrete_idxs[same_idx] = np.random.choice(
+            np.arange(d), np.sum(same_idx))
+        same_idx = (discrete_idxs == continuous_idxs)
+    
     continuous_values = np.zeros((n, m))
     discrete_values = np.zeros((n, m))
-    for i in continuous_features:
+    for i in range(d):
         idx = (continuous_idxs == i)
         continuous_values[idx] = np.random.choice(X[:, i], (np.sum(idx),m))
-    for i in discrete_features:
+    for i in range(d):
         idx = (discrete_idxs == i)
         discrete_values[idx] = np.random.choice(X[:, i], (np.sum(idx),m))
     
@@ -268,7 +281,7 @@ def normalize_lines(L):
 from parameters import Datasets
 
 def generate_data_set_of_sets(n, m, data_type):
-    real_data = fetch_covtype #fetch_california_housing
+    real_data = fetch_california_housing #fetch_covtype 
     generate_fs = {
         Datasets.POINTS_RANDOM : generate_colored_points_sets_synthetic_random,
         Datasets.POINTS_FLOWER : generate_colored_points_sets_synthetic_flower,
@@ -282,8 +295,9 @@ def generate_data_set_of_sets(n, m, data_type):
         Datasets.LINES_COVTYPE : partial(
             generate_set_of_sets_of_lines_reconstruction,
             fetch_data_f=real_data, 
-            continuous_features=list(range(0,10)), 
-            discrete_features=list(range(10,54))),
+            #continuous_features=list(range(0,10)), 
+            #discrete_features=list(range(10,54))
+            ),
         }
         
     '''

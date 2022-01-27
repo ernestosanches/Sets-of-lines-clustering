@@ -76,9 +76,13 @@ def evaluate_coreset(L, k, sensitivities, evaluate_f, sizes, data_type, n_sample
         epsilons_all.append((size, epsilon_all,
                              epsilon_all_random))
     plot_graphs(epsilons, n, m, k, n_samples, data_type)
+    curr_time = ctime().replace(':', '-')
     pickle.dump(epsilons, open(
         "results/epsilons_{}_{}_{}_{}_{}.p".format(
-            n, m, k, data_type, ctime()), "wb"))
+            n, m, k, data_type, curr_time), "wb"))
+    pickle.dump(epsilons, open(
+        "results/epsilons_all_{}_{}_{}_{}_{}.p".format(
+            n, m, k, data_type, curr_time), "wb"))
 
 # TODO: remove global variables
 def run_coreset_set_of_sets(n, m, k, sizes, data_type, n_samples):

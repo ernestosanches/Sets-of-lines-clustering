@@ -121,7 +121,7 @@ def CS_dense(P, k, m_CS=2, tau=1/20., k_closest=2):
                                      for P in P_prev])
             b, _ = median_colored_point_sets_to_points(P_prev_hat, k, delta) 
             P_hat_closest, _ = closest_colored_point_sets_to_points(
-                P_prev_hat, [b], (1 - tau) / (2 * k_closest))
+                P_prev_hat, [b], (1 - tau) / (1.1 * max(2, k_closest))) # TODO: 2 * k
                 
             P_prev = np.asarray([
                 P for P in P_prev if isin_all(
