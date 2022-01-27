@@ -312,4 +312,6 @@ def generate_data_set_of_sets(n, m, data_type):
     data = generate_f(n, m)
     if data_type in Datasets.DATASETS_LINES:
         data = normalize_lines(data)
+        
+    # data = np.repeat(data[:2], n//3, axis=0) # testing duplicate data
     return data

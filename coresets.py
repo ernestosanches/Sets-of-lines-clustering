@@ -3,6 +3,7 @@
 
 import numpy as np
 from itertools import chain
+from functools import partial
 from collections import Counter
 from utils import pack_colored_points, pack_lines, unpack_lines
 from median import (
@@ -93,17 +94,36 @@ def isin_all(A, B):
     return np.isin(np.around(A, PRECISION), 
                    np.around(B, PRECISION)).all()
 
+
+
+def find_unique_correspondances(A, B, f):
+    ''' finds unique members a \in A such that 
+        there is b \in B such that f(a) == b '''
+    A_remaining_idx = list(range(len(A)))
+    result_idx = []
+    for b in B:
+        for i in range(len(A_remaining_idx)):
+            a_idx = A_remaining_idx[i] 
+            a = A[a_idx]
+            if np.all(f(a) == b):
+                result_idx.append(a_idx)
+                del A_remaining_idx[i]
+                break
+    return np.array(A)[result_idx]
+
 ''' 
     Main algorithms from the paper "Sets of lines clustering"
 '''
 
-def CS_dense(P, k, m_CS=2, tau=1/20., k_closest=2):
+def CS_dense(P, k, m_CS=2, tau=1/20., k_closest=2, is_perpendicular=False):
     ''' P is (n, m)-ordered set. computes recursive robust median 
         Reduces data by ((1 - tau) / (4 * k)) ** m_CS '''
     m = len(P[0])
     m_CS = min(m_CS, len(P[0])) # TODO: check m_CS
     k_closest = min(k, 2) #min(k_closest, 4 * k)
-    k_iterations = min(k, 2)
+    
+    k_iterations = 1 if is_perpendicular else min(k, 2)
+    
     P_prev = P
     delta = tau
     stopCondition = False
@@ -123,10 +143,14 @@ def CS_dense(P, k, m_CS=2, tau=1/20., k_closest=2):
             P_hat_closest, _ = closest_colored_point_sets_to_points(
                 P_prev_hat, [b], (1 - tau) / (1.1 * max(2, k_closest))) # TODO: 2 * k
                 
-            P_prev = np.asarray([
+            f_proj = partial(proj_hat_colored_point, B=B_prev)
+            P_prev = find_unique_correspondances(P_prev, P_hat_closest, f_proj) 
+            '''
+            = np.asarray([
                 P for P in P_prev if isin_all(
                     proj_hat_colored_point(P, B_prev), P_hat_closest)])
-                                 
+            '''
+            
             #                     if set_in_setofsets(
             #                             proj_hat_colored_point(P, B_prev), 
             #                             P_hat_closest)])
@@ -138,7 +162,8 @@ def CS_dense(P, k, m_CS=2, tau=1/20., k_closest=2):
                 r, l, len(P_hat_closest), len(P_prev)))
     return P_prev, np.asarray(B_prev)
 
-def Grouped_sensitivity(L, B, k, k_CS=2, tau=1/20., k_closest=2):    
+
+def Grouped_sensitivity(L, B, k, k_CS=2, tau=1/20., k_closest=2, is_perpendicular=False):    
     ''' Reduces data by ((1 - tau) / (4 * k)) ** m_CS '''
     m = len(L[0])
     P_m = P_all = P_L = np.asarray([intersect_spheres(l, B) for l in L])
@@ -150,7 +175,7 @@ def Grouped_sensitivity(L, B, k, k_CS=2, tau=1/20., k_closest=2):
     print("Grouped sensitivity: len(P_m) = {}, 2 * k_CS = {}".format(
           len(P_m), b))
     if 1:#while len(P_m) > b: 
-        P_m, B_m = CS_dense(P_L, k_CS, tau=tau, k_closest=k_closest)
+        P_m, B_m = CS_dense(P_L, k_CS, tau=tau, k_closest=k_closest, is_perpendicular=is_perpendicular)
         for P in P_m:
             s[to_tuple(P)] = b / len(P_m) 
         P_L = [P for P in P_L if not set_in_setofsets(P, P_m)]
@@ -164,7 +189,27 @@ def Grouped_sensitivity(L, B, k, k_CS=2, tau=1/20., k_closest=2):
     return np.asarray(s_lines), P_all, s
 
 
-def LS_dense(L, k, k_closest=None):
+'''
+from collections import Counter
+def Grouped_sensitivity_perpendicular(L, B, k, k_CS=2, tau=1/20., k_closest=2):    
+     Reduces data by ((1 - tau) / (4 * k)) ** m_CS 
+    n, m = len(L), len(L[0]) #  n, m, d * 2
+    p, d = unpack_lines(L)   # n, m, d
+        
+    d_abs = np.abs(d)
+    
+    for j in range(m):
+        d_column = d_abs[:,j,:]
+        counts = Counter(d_column).items()
+        best_key, best_value = counts[0]
+        for key, value in counts:
+            if value > best_value:
+                best_key, best_value = key, value
+    
+'''  
+
+    
+def LS_dense(L, k, k_closest=None, is_perpendicular=False):
     m = min(2, len(L[0]))
     delta = tau = 1/20.0
     L_prev = L
@@ -177,9 +222,17 @@ def LS_dense(L, k, k_closest=None):
         b, _ = median_line_sets_to_points(L_prev_hat, k, delta) # TODO: cache m**2
         L_hat_closest, _ = closest_line_sets_to_points(
             L_prev_hat, [b], (1 - tau) / k_closest)
-        L_prev = np.asarray([
+
+        
+        f_proj = partial(proj_hat_line, B=B_prev)
+        L_prev = find_unique_correspondances(L_prev, L_hat_closest, f_proj) 
+
+        '''
+        = np.asarray([
             L for L in L_prev if isin_all(
                 proj_hat_line(L, B_prev), L_hat_closest)])
+        '''
+
         B_prev.append(b)            
         print("i={}, L_hat_closest: {}, L_prev: {}".format(
             i, len(L_hat_closest), len(L_prev)))
@@ -189,7 +242,7 @@ def LS_dense(L, k, k_closest=None):
     
     L_new = np.asarray([project_line(L, B_prev) for L in L_prev])
     
-    sensitivities, _, _ = Grouped_sensitivity(L_new, B_prev, k)
+    sensitivities, _, _ = Grouped_sensitivity(L_new, B_prev, k, is_perpendicular=is_perpendicular)
     #sensitivities = np.asarray([s[L_idx] for L_idx, L in enumerate(L_new)])
     min_sensitivity = np.min(sensitivities)
     min_sensitivity_idx = np.isclose(sensitivities, min_sensitivity)
@@ -197,7 +250,7 @@ def LS_dense(L, k, k_closest=None):
     return L_m_plus_one, np.asarray(B_prev)
     
 def coreset(L, k, f_dense=LS_dense, 
-            hash_to_f=to_tuple, hash_from_f=from_tuple):
+            hash_to_f=to_tuple, hash_from_f=from_tuple, is_perpendicular=False):
     ''' Computes sensitivities.
         For using with lines:
             - L is set of sets of lines,

@@ -113,9 +113,9 @@ def enumerate_set_of_sets_centroids(L):
     
     idx = 0
     L_all = L.reshape((-1, L.shape[-1]))
-    for element1 in L_all:
-        for element2 in L_all:
-            if np.any(element1 != element2):
+    for idx1, element1 in enumerate(L_all):
+        for idx2, element2 in enumerate(L_all):
+            if idx1 != idx2:
                 p = closest_point_to_two_lines(element1, element2)
                 yield idx, p
                 idx += 1

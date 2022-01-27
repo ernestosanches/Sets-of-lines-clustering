@@ -41,7 +41,7 @@ def get_coreset(n, m, k, data_type):
         evaluate_f = evaluate_colored_points
     pickle.dump((L, sensitivities), open(
         "results/coreset_{}_{}_{}_{}_{}.p".format(
-            n, m, k, data_type, ctime()), "wb"))
+            n, m, k, data_type, ctime().replace(':', '-')), "wb"))
     return L, sensitivities, evaluate_f
 
 def do_test_coreset(L, sensitivities, sizes):

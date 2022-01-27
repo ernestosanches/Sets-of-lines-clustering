@@ -189,17 +189,24 @@ def test_ls_dense(Lm, Bm):
 
 ############
 
-def _get_coreset(n, m, k, data_type, f_dense, seed):
+def _get_coreset(n, m, k, data_type, f_dense, seed, is_perpendicular=False):
     np.random.seed(seed)
     L = generate_data_set_of_sets(n, m, data_type)
-    sensitivities = coreset(L, k, f_dense=f_dense)
+    sensitivities = coreset(L, k, f_dense=f_dense, 
+                            is_perpendicular=is_perpendicular)
     return L, sensitivities
 
-def get_coreset_lines(n, m, k, data_type, seed=432):
-    return _get_coreset(n, m, k, data_type, LS_dense, seed)
+def get_coreset_lines(n, m, k, data_type, seed=432, is_perpendicular=False):
+    return _get_coreset(n, m, k, data_type, LS_dense, seed, 
+                        is_perpendicular=(
+                            data_type == Datasets.LINES_PERPENDICULAR or
+                            data_type == Datasets.LINES_COVTYPE
+                            )
+                        )
 
 def get_coreset_points(n, m, k, data_type, seed=432):
-    return _get_coreset(n, m, k, data_type, CS_dense, seed)
+    return _get_coreset(n, m, k, data_type, CS_dense, seed, 
+                        is_perpendicular=False)
 
 ############
 
