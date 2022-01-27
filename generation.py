@@ -69,7 +69,7 @@ def generate_set_of_lines(n, offset=np.zeros((1, 2)), variant=2):
         d = scale(d)
         print("c,d:", c.shape, d.shape)
         P = pack_lines(c, d)    
-    
+
         size = n - n//50
         c = np.repeat(offset, size, axis=0)
         d = np.hstack([np.random.normal(0, 0.5, size=(size, 1)), 3 * np.ones((size, 1))])
@@ -163,11 +163,13 @@ def generate_colored_points_sets_synthetic_random(n, m, variant=3):
                           for color, P in enumerate(point_groups)]
     return stack_point_sets(colored_points)
 
-def generate_colored_points_from_data(n, m, fetch_data_f):
+def generate_colored_points_from_data(n, m, fetch_data_f, project_2d=False):
     assert(m==1)
     X, Y = fetch_data_f(return_X_y=True)
     X = X[np.random.choice(len(X), n, replace=False)]
     X = np.asarray(X, dtype=float)
+    if project_2d:
+        X = X[:, :2]
     X = scale(X)
     X = pack_colored_points(X, np.zeros((n, 1)))
     return np.expand_dims(X, axis=1)
@@ -197,14 +199,14 @@ def generate_set_of_sets_of_lines_reconstruction_m_1_old(
 
 def generate_set_of_sets_of_lines_reconstruction(
         n, m, fetch_data_f,# continuous_features, discrete_features,
-        #project_2d=True
+        project_2d=False
         ):        
     X, Y = fetch_data_f(return_X_y=True)
     X = X[np.random.choice(len(X), n, replace=False)]
-    '''
+
     if project_2d:
-        X = X[:, 9:11] # TODO: remove; use all dimensions
-    '''
+        X = X[:, :2] # TODO: remove; use all dimensions
+
     X = np.asarray(X, dtype=float)
     X = scale(X)
     
@@ -289,12 +291,15 @@ def generate_data_set_of_sets(n, m, data_type):
         Datasets.POINTS_CLOUD : generate_colored_points_sets_3d_cloud,
         Datasets.POINTS_COVTYPE : partial(
             generate_colored_points_from_data,
-            fetch_data_f=real_data),
+            fetch_data_f=real_data,
+            project_2d=True,
+            ),
         Datasets.LINES_RANDOM : generate_set_of_sets_of_lines_synthetic_random,
         Datasets.LINES_PERPENDICULAR : generate_set_of_sets_of_lines_synthetic_perpendicular,
         Datasets.LINES_COVTYPE : partial(
             generate_set_of_sets_of_lines_reconstruction,
             fetch_data_f=real_data, 
+            project_2d=True,
             #continuous_features=list(range(0,10)), 
             #discrete_features=list(range(10,54))
             ),

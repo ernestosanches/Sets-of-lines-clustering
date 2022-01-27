@@ -3,11 +3,11 @@ class Datasets:
     POINTS_FLOWER = "Circular points" # TODO: comparison with "Sets clustering"
     POINTS_REUTERS = "Reuters"
     POINTS_CLOUD = "Points cloud"
-    POINTS_COVTYPE = "Covtype points"
+    POINTS_COVTYPE = "California housing (points)"
 
     LINES_RANDOM = "Random lines"
     LINES_PERPENDICULAR = "Random perpendicular lines"
-    LINES_COVTYPE = "California housing with missing data"
+    LINES_COVTYPE = "California housing (lines)"
     #LINES_KDDCUP = "KDD Cup 99"
     DATASETS_POINTS = (POINTS_RANDOM, POINTS_FLOWER, 
                        POINTS_REUTERS, POINTS_CLOUD, POINTS_COVTYPE) 

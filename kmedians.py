@@ -1,7 +1,7 @@
 import numpy as np
 from median import (
     robust_median, dist_points, dist_colored_points_min_set_to_point,
-    enumerate_set_of_sets, dist_colored_points_min_p_to_set)
+    enumerate_set_of_sets)
 from drawing import (
     draw_colored_point_set, draw_colored_point_sets, draw_point_set)
 
@@ -69,11 +69,12 @@ def centroids_set_init(P, k):
     return np.concatenate(centroids, axis=0)
 
 if __name__ == "__main__":
-    from generation import generate_colored_points_sets
+    from generation import generate_data_set_of_sets
+    from parameters import Datasets
     n = 500
     m=2
     k = 4
-    P = generate_colored_points_sets(n, m)
+    P = generate_data_set_of_sets(n, m, Datasets.POINTS_RANDOM)
     cost, centroids = kmedians(P, k,
                                draw_f=draw_colored_point_sets,
                                draw_centroids_f=draw_colored_point_set,

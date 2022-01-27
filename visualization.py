@@ -62,8 +62,9 @@ def visualize_coreset_sensitivities(P, sensitivities, k, data_type,
     plt.colorbar(sm)
     plt.xlabel("X")
     plt.ylabel("Y")
-    plt.savefig("results/sensitivities_coreset_n{}_m{}_k{}_{}_L{}, {}.png".format(
-        n, m, k, data_type, int(apply_log), ctime().replace(':', '-')), dpi=200)
+    plt.savefig("results/sensitivities_coreset_n{}_m{}_k{}_{}_L{}_mul{}, {}.png".format(
+        n, m, k, data_type, int(apply_log), mul,
+        ctime().replace(':', '-')), dpi=300)
 
     
 
@@ -87,8 +88,10 @@ def visualize_points_colors(P, k, data_type, feature_offset=0):
 def visualize_coreset(P, sensitivities, k, data_type, feature_offset=0, 
                       mul=None):
     for apply_log in (False, True):
-        visualize_coreset_sensitivities(
-            P, sensitivities, k, data_type, apply_log, feature_offset, mul)
+        muls = [1] if apply_log else [1,5,10,25] 
+        for mul in muls:
+            visualize_coreset_sensitivities(
+                P, sensitivities, k, data_type, apply_log, feature_offset, mul)
     if data_type in Datasets.DATASETS_POINTS:
         visualize_points_colors(P, k, data_type, feature_offset)
         d = P.shape[-1]
@@ -140,7 +143,7 @@ def visualize_coreset_points_3d(P, k, sensitivities, threshold=1,
         " and sensitivities" if colors is None else "",
         " * {}".format(mul) if (mul != 1 and colors is None) else ""))
     plt.savefig("results/sensitivities_3d_n{}_m{}_k{}_{}_{}.png".format(
-        n, m, k, data_type, ctime().replace(':', '-')), dpi=200)
+        n, m, k, data_type, ctime().replace(':', '-')), dpi=300)
 
 
 def load_colors_rgb(fname):

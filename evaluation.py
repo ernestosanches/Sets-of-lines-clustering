@@ -308,8 +308,9 @@ def evaluate_colored_points(L, sensitivities, size, k, n_samples, sample_f,
             result = Parallel()(
                 [delayed(do_work)(i) for i in range(n_samples // 2)])
             P_queries.extend(result)
-            idx = np.random.choice(len(L), n_samples // 2, replace=False)
-            P_queries.extend(L[idx])
+            for i in range(n_samples // 2):    
+                P_queries.append(centroids_set_init(L, k))
+            #idx = np.random.choice(len(L), n_samples, replace=False)
             np.random.shuffle(P_queries)
             print("Finished building set of optimal queries")
         pass

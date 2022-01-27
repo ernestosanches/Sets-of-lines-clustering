@@ -1,9 +1,11 @@
 import pickle
+from drawing import plot_graphs
 
 # TODO: plotting of the graphs from pickle
 def results_from_pickle(data_path):
-    data = pickle.load(open(data_path, "rb"))
-        
+    epsilons = pickle.load(open(data_path, "rb"))
+    plot_graphs(epsilons, n, m, k, n_samples, data_type)
+    return epsilons
     
 if __name__ == '__main__':
     data = results_from_pickle(
