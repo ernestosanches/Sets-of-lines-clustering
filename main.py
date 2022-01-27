@@ -10,7 +10,7 @@ if __name__ == "__main__":
     if not path.exists("results"):
         mkdir("results")
     # parameters
-    n = 3000 # total data size
+    n = 5000 # total data size
     m = 2    # size of each set in the data
     k = 2 # k centers
     n_samples = 100 # how many times experiment for each graph point is repeated

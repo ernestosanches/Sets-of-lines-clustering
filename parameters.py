@@ -7,7 +7,7 @@ class Datasets:
 
     LINES_RANDOM = "Random lines"
     LINES_PERPENDICULAR = "Random perpendicular lines"
-    LINES_COVTYPE = "Covtype"
+    LINES_COVTYPE = "California housing with missing data"
     #LINES_KDDCUP = "KDD Cup 99"
     DATASETS_POINTS = (POINTS_RANDOM, POINTS_FLOWER, 
                        POINTS_REUTERS, POINTS_CLOUD, POINTS_COVTYPE) 

@@ -165,12 +165,12 @@ def Grouped_sensitivity(L, B, k, k_CS=2, tau=1/20., k_closest=2):
 
 
 def LS_dense(L, k, k_closest=None):
-    m = len(L[0])
+    m = min(2, len(L[0]))
     delta = tau = 1/20.0
     L_prev = L
     B_prev = []
     if k_closest is None:
-        k_closest = 2 * k
+        k_closest = 2.2#(1.1 * max(2, k)) # 2 * k
     
     for i in range(m):
         L_prev_hat = np.asarray([proj_hat_line(L, B_prev) for L in L_prev])
