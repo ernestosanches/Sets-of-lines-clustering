@@ -1,4 +1,5 @@
 import numpy as np
+from time import ctime
 from collections.abc import Iterable
 from matplotlib import pyplot as plt
 from utils import unpack_colored_points, unpack_lines
@@ -141,6 +142,10 @@ def plot_graphs(epsilons, n, m, k, n_samples, data_type):
     #plt.yscale("log")
     plt.ylim(0, 1.1 * max(epsilon_mus.max(), epsilon_random_mus.max()))
     plt.legend()
+    plt.show()
+    plt.pause(0.001)    
+    plt.savefig("results/graph_coreset_n{}_m{}_k{}_{}_{}.png".format(
+        n, m, k, data_type, ctime().replace(':', '-')), dpi=300)
 
 # TODO:  REAL DATA LINES ---   USE ONLY discrete feat. with small num of vals.
 

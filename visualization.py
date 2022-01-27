@@ -1,7 +1,8 @@
 import numpy as np
 import pandas as pd
+from time import ctime
 from matplotlib import pyplot as plt
-from matplotlib.colors import LinearSegmentedColormap
+#from matplotlib.colors import LinearSegmentedColormap
 from matplotlib import cm
 
 from drawing import draw_line_set
@@ -61,6 +62,9 @@ def visualize_coreset_sensitivities(P, sensitivities, k, data_type,
     plt.colorbar(sm)
     plt.xlabel("X")
     plt.ylabel("Y")
+    plt.savefig("results/sensitivities_coreset_n{}_m{}_k{}_{}_L{}, {}.png".format(
+        n, m, k, data_type, int(apply_log), ctime().replace(':', '-')), dpi=200)
+
     
 
 def visualize_points_colors(P, k, data_type, feature_offset=0):
@@ -77,6 +81,8 @@ def visualize_points_colors(P, k, data_type, feature_offset=0):
     plt.colorbar()
     plt.xlabel("X")
     plt.ylabel("Y")
+    plt.savefig("results/colors_coreset_n{}_m{}_k{}_{}_{}.png".format(
+        n, m, k, data_type, ctime().replace(':', '-')), dpi=300)
 
 def visualize_coreset(P, sensitivities, k, data_type, feature_offset=0, 
                       mul=None):
@@ -87,8 +93,8 @@ def visualize_coreset(P, sensitivities, k, data_type, feature_offset=0,
         visualize_points_colors(P, k, data_type, feature_offset)
         d = P.shape[-1]
         if d >= 3+1:
-            visualize_coreset_points_3d(P, sensitivities, data_type=data_type, 
-                                        feature_offset=feature_offset)
+            visualize_coreset_points_3d(P, k, sensitivities, data_type=data_type, 
+                                        feature_offset=feature_offset)   
     plt.show()
     plt.pause(0.001)
 
@@ -96,7 +102,7 @@ def visualize_coreset(P, sensitivities, k, data_type, feature_offset=0,
 # Outliers removal visualization #
 ##################################
 
-def visualize_coreset_points_3d(P, sensitivities, threshold=1, 
+def visualize_coreset_points_3d(P, k, sensitivities, threshold=1, 
                                 data_type=None, feature_offset=0, 
                                 colors=None, mul=1):
     def draw_3d(ax, points, idx, offset, sensitivities, 
@@ -133,7 +139,9 @@ def visualize_coreset_points_3d(P, sensitivities, threshold=1,
         "{}: ".format(data_type) if data_type is not None else "",
         " and sensitivities" if colors is None else "",
         " * {}".format(mul) if (mul != 1 and colors is None) else ""))
-    fig.show()
+    plt.savefig("results/sensitivities_3d_n{}_m{}_k{}_{}_{}.png".format(
+        n, m, k, data_type, ctime().replace(':', '-')), dpi=200)
+
 
 def load_colors_rgb(fname):
     colors = pd.read_csv(
