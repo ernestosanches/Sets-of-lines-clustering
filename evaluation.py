@@ -2,6 +2,7 @@
     Also allows testing of intermediate algorithms. '''
 
 import numpy as np
+from functools import partial
 from matplotlib import pyplot as plt
 from joblib import Parallel, delayed
 from utils import (pack_colored_points, pack_lines,
@@ -9,7 +10,7 @@ from utils import (pack_colored_points, pack_lines,
 from median import (
     robust_median, recursive_robust_median,
     closest_lines, closest_points, dist_points, dist_lines,
-    closest_point_sets, dist_colored_points, 
+    closest_point_sets, dist_colored_points, dist_lines_min_set_to_point,
     dist_lines_min_set_to_set, closest_colored_points, 
     closest_colored_point_sets, dist_colored_points_min_set_to_set,
     dist_colored_points_min_set_to_point, dist_colored_points_min_p_to_set,
@@ -265,6 +266,25 @@ def evaluate_lines(L, sensitivities, size, k, n_samples, sample_f, P_queries):
     epsilons = []
     if len(P_queries) == 0:
         print("Building set of optimal queries")
+
+        # K-median heuristic queries
+        def do_work(i):
+            print("K-medians query:", i)
+            cost, centroids = kmedians(
+                L, k,
+                draw_f=None,
+                draw_centroids_f=None,
+                dist_f=dist_lines_min_set_to_point,
+                enumerate_f=enumerate_set_of_sets_centroids,
+                centroids_init_f=partial(
+                    centroids_set_init, is_lines=True),
+                )
+            return centroids
+        result = Parallel()(
+            [delayed(do_work)(i) for i in range(n_samples // 2)])
+        P_queries.extend(result)
+
+        # Centroid set queries
         n_lines = n_samples * 5
         if len(L) > n_lines:
             idx = np.random.choice(len(L), n_lines, replace=False)
@@ -275,19 +295,21 @@ def evaluate_lines(L, sensitivities, size, k, n_samples, sample_f, P_queries):
             [np.expand_dims(p, axis=0) 
                  for idx, p in enumerate_set_of_sets_centroids(L_subset)],
             axis=0)
-        idx = np.random.choice(len(centroids), n_samples // 2, replace=False)
-        P_queries.extend(centroids[idx])        
+        idx = np.random.choice(len(centroids), n_samples // 4, replace=False)
+        P_queries.extend(centroids[idx]) 
+        
+        # Random queries
         #p_min = np.min(centroids, axis=0)
         #p_max = np.max(centroids, axis=0)
         p_mean = np.mean(centroids, axis=0)
         p_diameter = np.max(centroids, axis=0) - np.min(centroids, axis=0)
         print("p_mean={}, p_diameter={}".format(p_mean, p_diameter))
         n_diameters = 1
-        d = L.shape[-1] // 2
+        d = L.shape[-1] // 4
         coordinates_rnd = np.random.uniform(
             p_mean - n_diameters * p_diameter, 
             p_mean + n_diameters * p_diameter, 
-            size=(n_samples // 2, d))
+            size=(n_samples // 4, d))
         P_queries.extend(coordinates_rnd)
         np.random.shuffle(P_queries)
         print("Finished building set of optimal queries")

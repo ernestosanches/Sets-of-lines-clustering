@@ -78,7 +78,7 @@ if __name__ == "__main__":
     from generation import generate_data_set_of_sets
     from parameters import Datasets
     n = 500
-    m=2
+    m = 2
     k = 4
     
     '''

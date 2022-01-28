@@ -175,7 +175,7 @@ def CS_dense(P, k, m_CS=2, tau=1/20., k_closest=2, is_perpendicular=False):
             P_prev_size_prev = len(P_prev)
             print("r={}, l={}, P_hat_closest: {}, P_prev: {}".format(
                 r, l, len(P_hat_closest), len(P_prev)))
-    return P_prev, np.asarray(B_prev)
+    return P_prev, np.asarray(B_prev), len(P_prev)
 
 
 def Grouped_sensitivity(L, B, k, k_CS=2, tau=1/20., k_closest=2, is_perpendicular=False):    
@@ -190,7 +190,7 @@ def Grouped_sensitivity(L, B, k, k_CS=2, tau=1/20., k_closest=2, is_perpendicula
     print("Grouped sensitivity: len(P_m) = {}, 2 * k_CS = {}".format(
           len(P_m), b))
     if 1:#while len(P_m) > b: 
-        P_m, B_m = CS_dense(P_L, k_CS, tau=tau, k_closest=k_closest, is_perpendicular=is_perpendicular)
+        P_m, B_m, _ = CS_dense(P_L, k_CS, tau=tau, k_closest=k_closest, is_perpendicular=is_perpendicular)
         for P in P_m:
             s[to_tuple(P)] = b / len(P_m) 
         
