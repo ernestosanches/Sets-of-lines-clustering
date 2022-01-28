@@ -10,10 +10,10 @@ if __name__ == "__main__":
     if not path.exists("results"):
         mkdir("results")
     # parameters
-    n = 200 # total data size
-    m = 2    # size of each set in the data
+    n = 1000 # total data size
+    m = 4    # size of each set in the data
     k = 2 # k centers
-    n_samples = 50 # how many times experiment for each graph point is repeated
+    n_samples = 500 # how many times experiment for each graph point is repeated
     do_lines = True
     
     if do_lines:
@@ -30,9 +30,9 @@ if __name__ == "__main__":
                      ]
     
     for data_type in data_types:
-        print("\nExperiment on {}: n = {}, m = {}, k = {}".format(
-            data_type, n, m, k))
-        sizes = np.logspace(1, 4, 10, dtype=int)
+        print("\nExperiment on {}: n = {}, m = {}, k = {}, n_samples = {}".format(
+            data_type, n, m, k, n_samples))
+        sizes = np.logspace(1, 3, 10, dtype=int)
         sizes = sizes[sizes < n]
         
         ''' coreset testing ''' 

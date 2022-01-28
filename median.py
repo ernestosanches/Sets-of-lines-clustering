@@ -223,12 +223,12 @@ def median_exhaustive(P, gamma,
 
 def robust_median(P, k, delta=1/20.0, 
                   dist_f=dist_points, enumerate_f=enumerate,
-                  ):
+                  max_points=100):
     ''' Implementation of a robust k-median algorithm. 
         Parameters meaning is same as in median_exhaustive '''
     b = 4 / (1-delta) # constant that can be found from proofs of the lemmas
     n = len(P)
-    size = np.clip(int(np.ceil(b * k**2 * np.log(1/delta))), 1, 100)
+    size = np.clip(int(np.ceil(b * k**2 * np.log(1/delta))), 1, max_points)
     if size < len(P):
         idx = np.random.choice(n, size=min(size, n), replace=True) 
         S = P[idx]

@@ -286,7 +286,7 @@ from parameters import Datasets
 
 def generate_data_set_of_sets(n, m, data_type):
     real_data = fetch_california_housing #fetch_covtype 
-    project_2d = True
+    project_2d = False
     generate_fs = {
         Datasets.POINTS_RANDOM : generate_colored_points_sets_synthetic_random,
         Datasets.POINTS_FLOWER : generate_colored_points_sets_synthetic_flower,

@@ -267,11 +267,13 @@ def LS_dense(L, k, k_closest=None, is_perpendicular=False):
     min_sensitivity = np.min(sensitivities)
     min_sensitivity_idx = np.isclose(sensitivities, min_sensitivity)
     L_m_plus_one = L_prev[min_sensitivity_idx]
+    '''
     if len(L_m_plus_one) > expected_size:
         idx = np.random.choice(
             len(L_m_plus_one), expected_size, replace=False)
         L_m_plus_one = L_m_plus_one[idx]
-    return L_m_plus_one, np.asarray(B_prev)
+    '''
+    return L_m_plus_one, np.asarray(B_prev), expected_size
     
 def coreset(L, k, f_dense=LS_dense, 
             hash_to_f=to_tuple, hash_from_f=from_tuple, is_perpendicular=False):
@@ -294,8 +296,8 @@ def coreset(L, k, f_dense=LS_dense,
     stopCondition = False
     #prevSize = float("inf")
     while not stopCondition: #len(L_0) > b:
-        L_m_plus_one, B_m_plus_one = f_dense(L_0, k)
-        currSize = len(L_m_plus_one)
+        L_m_plus_one, B_m_plus_one, expected_size = f_dense(L_0, k)
+        currSize = min(len(L_m_plus_one), expected_size)
         stopCondition = currSize <= b # or  currSize > prevSize * 16 
         if not stopCondition:
             for L_set in L_m_plus_one:

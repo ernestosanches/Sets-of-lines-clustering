@@ -1,7 +1,9 @@
 import numpy as np
+from functools import partial
 from median import (
     robust_median, dist_points, dist_colored_points_min_set_to_point,
-    enumerate_set_of_sets)
+    dist_lines_min_set_to_point, enumerate_set_of_sets,
+    enumerate_set_of_sets_centroids)
 from drawing import (
     draw_colored_point_set, draw_colored_point_sets, draw_point_set)
 
@@ -33,7 +35,8 @@ def kmedians(P, k, epsilon = 0.01, delta=1/20.0,
             if len(group) == 0:
                 continue
             centroid, cost = robust_median(group, k, delta, dist_f, 
-                                           enumerate_f) #, dist_to_set_f)
+                                           enumerate_f,
+                                           max_points=10) #, dist_to_set_f)
             centroids.append(centroid)
             costs += cost
         return np.sum(costs), centroids
@@ -56,8 +59,8 @@ def kmedians(P, k, epsilon = 0.01, delta=1/20.0,
         iteration, curr_cost, [len(g) for g in groups]))
     return curr_cost, centroids
    
-def centroids_set_init(P, k):
-    m = P.shape[1]
+def centroids_set_init(P, k, is_lines=False):
+    n, m, d = P.shape
     centroids = []
     k_remaining, m_remaining = k, m
     for set_idx in range(m):
@@ -66,7 +69,10 @@ def centroids_set_init(P, k):
         m_remaining -= 1
         idx = np.random.choice(len(P), count)
         centroids.append(P[idx, set_idx])
-    return np.concatenate(centroids, axis=0)
+    result = np.concatenate(centroids, axis=0)
+    if is_lines:
+        result = result[..., :d//2]
+    return result
 
 if __name__ == "__main__":
     from generation import generate_data_set_of_sets
@@ -74,6 +80,8 @@ if __name__ == "__main__":
     n = 500
     m=2
     k = 4
+    
+    '''
     P = generate_data_set_of_sets(n, m, Datasets.POINTS_RANDOM)
     cost, centroids = kmedians(P, k,
                                draw_f=draw_colored_point_sets,
@@ -84,4 +92,13 @@ if __name__ == "__main__":
                                #centroids_init=np.array(
                                #    [[0, 10,0], [0,-10,1], [100,10,0], [100,-10,1]])
                                )
-    
+    '''
+    P = generate_data_set_of_sets(n, m, Datasets.LINES_RANDOM)
+    cost, centroids = kmedians(P, k,
+                               draw_f=None,
+                               draw_centroids_f=None,
+                               dist_f=dist_lines_min_set_to_point,
+                               enumerate_f=enumerate_set_of_sets_centroids,
+                               centroids_init_f=partial(
+                                   centroids_set_init, is_lines=True)
+                               )

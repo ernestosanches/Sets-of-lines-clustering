@@ -279,8 +279,8 @@ def evaluate_lines(L, sensitivities, size, k, n_samples, sample_f, P_queries):
         P_queries.extend(centroids[idx])        
         #p_min = np.min(centroids, axis=0)
         #p_max = np.max(centroids, axis=0)
-        p_mean = np.array([15,4]) # np.mean(centroids, axis=0)
-        p_diameter = np.array([0.2, 0.2]) #np.max(centroids, axis=0) - np.min(centroids, axis=0)
+        p_mean = np.mean(centroids, axis=0)
+        p_diameter = np.max(centroids, axis=0) - np.min(centroids, axis=0)
         print("p_mean={}, p_diameter={}".format(p_mean, p_diameter))
         n_diameters = 1
         d = L.shape[-1] // 2
@@ -294,7 +294,7 @@ def evaluate_lines(L, sensitivities, size, k, n_samples, sample_f, P_queries):
     
     epsilons = Parallel()([
         delayed(evaluate_sample)() for i in range(n_samples)])
-    block_size = n_samples // 10
+    block_size = n_samples // 5
     epsilons = [np.max(epsilons[i:i+block_size]) 
                 for i in range(0, len(epsilons), block_size)]
     return epsilons, np.mean(epsilons), np.std(epsilons)
@@ -363,7 +363,7 @@ def evaluate_colored_points(L, sensitivities, size, k, n_samples, sample_f,
             epsilon = 0
         epsilons.append(epsilon)
     # mean of maximums evaluation
-    block_size = n_samples // 10
+    block_size = n_samples // 5
     epsilons = [np.max(epsilons[i:i+block_size]) 
                 for i in range(0, len(epsilons), block_size)]
     return epsilons, np.mean(epsilons), np.std(epsilons)
