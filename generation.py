@@ -224,12 +224,14 @@ def generate_set_of_sets_of_lines_reconstruction(
         continuous_features = [0, 1]
         discrete_features = [0, 1]
     '''
-    continuous_idxs = np.random.choice(np.arange(d), n)
-    discrete_idxs = np.random.choice(np.arange(d), n)
+    probabilities = np.logspace(0, -3 if not project_2d else -2, d)
+    probabilities /= probabilities.sum()
+    continuous_idxs = np.random.choice(np.arange(d), n, p=probabilities)
+    discrete_idxs = np.random.choice(np.arange(d), n, p=probabilities)
     same_idx = (discrete_idxs == continuous_idxs)
     while np.any(same_idx):
         discrete_idxs[same_idx] = np.random.choice(
-            np.arange(d), np.sum(same_idx))
+            np.arange(d), np.sum(same_idx), p=probabilities)
         same_idx = (discrete_idxs == continuous_idxs)
     
     continuous_values = np.zeros((n, m))
@@ -284,6 +286,7 @@ from parameters import Datasets
 
 def generate_data_set_of_sets(n, m, data_type):
     real_data = fetch_california_housing #fetch_covtype 
+    project_2d = True
     generate_fs = {
         Datasets.POINTS_RANDOM : generate_colored_points_sets_synthetic_random,
         Datasets.POINTS_FLOWER : generate_colored_points_sets_synthetic_flower,
@@ -292,14 +295,14 @@ def generate_data_set_of_sets(n, m, data_type):
         Datasets.POINTS_COVTYPE : partial(
             generate_colored_points_from_data,
             fetch_data_f=real_data,
-            project_2d=True,
+            project_2d=project_2d,
             ),
         Datasets.LINES_RANDOM : generate_set_of_sets_of_lines_synthetic_random,
         Datasets.LINES_PERPENDICULAR : generate_set_of_sets_of_lines_synthetic_perpendicular,
         Datasets.LINES_COVTYPE : partial(
             generate_set_of_sets_of_lines_reconstruction,
             fetch_data_f=real_data, 
-            project_2d=True,
+            project_2d=project_2d,
             #continuous_features=list(range(0,10)), 
             #discrete_features=list(range(10,54))
             ),

@@ -265,14 +265,31 @@ def evaluate_lines(L, sensitivities, size, k, n_samples, sample_f, P_queries):
     epsilons = []
     if len(P_queries) == 0:
         print("Building set of optimal queries")
-        n_lines = n_samples * 10
+        n_lines = n_samples * 5
         if len(L) > n_lines:
             idx = np.random.choice(len(L), n_lines, replace=False)
             L_subset = L[idx]
         else:
             L_subset = L
-        P_queries.extend(
-            [p for idx, p in enumerate_set_of_sets_centroids(L_subset)])
+        centroids = np.concatenate(
+            [np.expand_dims(p, axis=0) 
+                 for idx, p in enumerate_set_of_sets_centroids(L_subset)],
+            axis=0)
+        idx = np.random.choice(len(centroids), n_samples // 2, replace=False)
+        P_queries.extend(centroids[idx])        
+        #p_min = np.min(centroids, axis=0)
+        #p_max = np.max(centroids, axis=0)
+        p_mean = np.array([15,4]) # np.mean(centroids, axis=0)
+        p_diameter = np.array([0.2, 0.2]) #np.max(centroids, axis=0) - np.min(centroids, axis=0)
+        print("p_mean={}, p_diameter={}".format(p_mean, p_diameter))
+        n_diameters = 1
+        d = L.shape[-1] // 2
+        coordinates_rnd = np.random.uniform(
+            p_mean - n_diameters * p_diameter, 
+            p_mean + n_diameters * p_diameter, 
+            size=(n_samples // 2, d))
+        P_queries.extend(coordinates_rnd)
+        np.random.shuffle(P_queries)
         print("Finished building set of optimal queries")
     
     epsilons = Parallel()([

@@ -94,8 +94,6 @@ def isin_all(A, B):
     return np.isin(np.around(A, PRECISION), 
                    np.around(B, PRECISION)).all()
 
-
-
 def find_unique_correspondances(A, B, f):
     ''' finds unique members a \in A such that 
         there is b \in B such that f(a) == b '''
@@ -110,6 +108,23 @@ def find_unique_correspondances(A, B, f):
                 del A_remaining_idx[i]
                 break
     return np.array(A)[result_idx]
+
+def subtract_sets(A, B):
+    A, B = np.asarray(A), np.asarray(B)
+    A_remaining_idx = []    
+    B_remaining_idx = list(range(len(B)))
+    for idx_a, a in enumerate(A):
+        found = False
+        for idx_b, b in enumerate(B[B_remaining_idx]):
+            if np.all(a == b):
+                found = True
+                break
+        if found:
+            del B_remaining_idx[idx_b]
+        else:
+            A_remaining_idx.append(idx_a)
+    return A[A_remaining_idx]
+
 
 ''' 
     Main algorithms from the paper "Sets of lines clustering"
@@ -178,15 +193,19 @@ def Grouped_sensitivity(L, B, k, k_CS=2, tau=1/20., k_closest=2, is_perpendicula
         P_m, B_m = CS_dense(P_L, k_CS, tau=tau, k_closest=k_closest, is_perpendicular=is_perpendicular)
         for P in P_m:
             s[to_tuple(P)] = b / len(P_m) 
-        P_L = [P for P in P_L if not set_in_setofsets(P, P_m)]
+        
+        #P_L = [P for P in P_L if not set_in_setofsets(P, P_m)]
+        P_L = subtract_sets(P_L, P_m)
         print("Grouped sensitivity: len(P_m) = {}, 2 * k_CS = {}".format(
               len(P_m), b))
 
     for q in P_L:
-        s[to_tuple(q)] = 1.01
+        hashed = to_tuple(q)
+        if hashed not in s:
+            s[hashed] = 1.01
     s_lines = [np.sqrt(2) * s[to_tuple(P_all[idx])] 
                for idx, l in enumerate(L)]
-    return np.asarray(s_lines), P_all, s
+    return np.asarray(s_lines), P_all, s, len(P_m)
 
 
 '''
@@ -242,11 +261,16 @@ def LS_dense(L, k, k_closest=None, is_perpendicular=False):
     
     L_new = np.asarray([project_line(L, B_prev) for L in L_prev])
     
-    sensitivities, _, _ = Grouped_sensitivity(L_new, B_prev, k, is_perpendicular=is_perpendicular)
+    sensitivities, _, _, expected_size = Grouped_sensitivity(
+        L_new, B_prev, k, is_perpendicular=is_perpendicular)
     #sensitivities = np.asarray([s[L_idx] for L_idx, L in enumerate(L_new)])
     min_sensitivity = np.min(sensitivities)
     min_sensitivity_idx = np.isclose(sensitivities, min_sensitivity)
     L_m_plus_one = L_prev[min_sensitivity_idx]
+    if len(L_m_plus_one) > expected_size:
+        idx = np.random.choice(
+            len(L_m_plus_one), expected_size, replace=False)
+        L_m_plus_one = L_m_plus_one[idx]
     return L_m_plus_one, np.asarray(B_prev)
     
 def coreset(L, k, f_dense=LS_dense, 
@@ -276,8 +300,12 @@ def coreset(L, k, f_dense=LS_dense,
         if not stopCondition:
             for L_set in L_m_plus_one:
                 s[hash_to_f(L_set)] = b / currSize
-            L_0 = [L_set for L_set in L_0 
-                   if not isin_all(L_set, L_m_plus_one)] # subtract sets
+
+            #L_0 = [L_set for L_set in L_0 
+            #       if not isin_all(L_set, L_m_plus_one)] # subtract sets
+            L_0 = subtract_sets(L_0, L_m_plus_one)
+
+
             print("Coreset: len(L_m_plus_one) = {}, len(L_0) = {}; b = {}, s = {}, s+l = {}".format(
                   currSize, len(L_0), b, len(s), len(s) + len(L_0)))
             stopCondition = (len(L_0) <= b)
