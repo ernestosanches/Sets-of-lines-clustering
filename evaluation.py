@@ -305,7 +305,7 @@ def evaluate_lines(L, sensitivities, size, k, n_samples, sample_f, P_queries):
         p_diameter = np.max(centroids, axis=0) - np.min(centroids, axis=0)
         print("p_mean={}, p_diameter={}".format(p_mean, p_diameter))
         n_diameters = 1
-        d = L.shape[-1] // 4
+        d = L.shape[-1] // 2
         coordinates_rnd = np.random.uniform(
             p_mean - n_diameters * p_diameter, 
             p_mean + n_diameters * p_diameter, 

@@ -141,6 +141,7 @@ def plot_graphs(epsilons, n, m, k, n_samples, data_type):
     plt.xscale("log")
     #plt.yscale("log")
     plt.ylim(0, 1.1 * max(epsilon_mus.max(), epsilon_random_mus.max()))
+    plt.xlim(sizes[0], sizes[-1])
     plt.legend()
     plt.show()
     plt.pause(0.001)    
