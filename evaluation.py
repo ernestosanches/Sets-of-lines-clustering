@@ -285,7 +285,7 @@ def evaluate_lines(L, sensitivities, size, k, n_samples, sample_f, P_queries):
         P_queries.extend(result)
 
         # Centroid set queries
-        n_lines = n_samples * 5
+        n_lines = min(50, n_samples)
         if len(L) > n_lines:
             idx = np.random.choice(len(L), n_lines, replace=False)
             L_subset = L[idx]
