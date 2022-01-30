@@ -120,7 +120,7 @@ def plot_mu_sigma(x, mus, sigmas, color, label, n_samples):
                      mus + sigmas / sqrt_n, 
                      alpha = 0.1, color=color)
 
-def plot_graphs(epsilons, n, m, k, n_samples, data_type):
+def plot_graphs(epsilons, n, m, k, n_samples, data_type, do_save=True):
     (sizes, epsilon_mus, epsilon_sigmas,
      epsilon_random_mus, epsilon_random_sigmas) = map(
          np.asarray, zip(*epsilons))
@@ -145,9 +145,10 @@ def plot_graphs(epsilons, n, m, k, n_samples, data_type):
     plt.legend()
     plt.show()
     plt.pause(0.001)    
-    plt.savefig("results/graph_coreset_n{}_m{}_k{}_{}_{}.png".format(
-        n, m, k, data_type, ctime().replace(':', '-')), dpi=300)
-
+    if do_save:
+        plt.savefig("results/graph_coreset_n{}_m{}_k{}_{}_{}.png".format(
+            n, m, k, data_type, ctime().replace(':', '-')), dpi=300)
+    
 # TODO:  REAL DATA LINES ---   USE ONLY discrete feat. with small num of vals.
 
 
