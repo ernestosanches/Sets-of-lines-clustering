@@ -13,18 +13,18 @@ if __name__ == "__main__":
     n = 200 # total data size
     m = 2 # size of each set in the data
     k = 2   # k centers
-    n_samples = 100 # how many times experiment for each graph point is repeated
+    n_samples = 500 # how many times experiment for each graph point is repeated
     do_lines = True
     
     if do_lines:
-        data_types = [Datasets.LINES_RANDOM,
+        data_types = [#Datasets.LINES_RANDOM,
                       #Datasets.LINES_PERPENDICULAR,
-                      #Datasets.LINES_COVTYPE,
+                      Datasets.LINES_COVTYPE,
                       ]
     else:
         data_types = [
-                      #Datasets.POINTS_RANDOM,
-                      Datasets.POINTS_REUTERS,
+                      Datasets.POINTS_RANDOM,
+                      #Datasets.POINTS_REUTERS,
                       #Datasets.POINTS_COVTYPE,
                       #Datasets.POINTS_CLOUD,
                      ]

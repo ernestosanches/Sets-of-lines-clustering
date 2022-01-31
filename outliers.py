@@ -5,7 +5,7 @@ from coresets import coreset, CS_dense
 from visualization import visualize_coreset_points_3d
 
 def remove_outliers(data_path, quantile, k=1, do_visualize=False):
-    P = generate_colored_points_sets_3d_cloud(None, 1, data_path)
+    P = generate_colored_points_sets_3d_cloud(data_path)
     colors = read_colors_3d_cloud()
     sensitivities = coreset(P, k, f_dense=CS_dense)
     sensitivities = np.minimum(sensitivities, 1) 
@@ -15,9 +15,9 @@ def remove_outliers(data_path, quantile, k=1, do_visualize=False):
     print("Outliers removal. Total points: {}, filtered: {}".format(
         len(P), len(P_filtered)))
     if do_visualize:
-        visualize_coreset_points_3d(P, sensitivities, colors=None,
+        visualize_coreset_points_3d(P, k, sensitivities, colors=None,
                                     threshold=threshold, mul=100)
-        visualize_coreset_points_3d(P, sensitivities, colors=colors,
+        visualize_coreset_points_3d(P, k, sensitivities, colors=colors,
                                     threshold=threshold)
     return P_filtered
 

@@ -94,35 +94,75 @@ def isin_all(A, B):
     return np.isin(np.around(A, PRECISION), 
                    np.around(B, PRECISION)).all()
 
+
+''' Sets of arrays manipulation functions ''' 
+
+def lexicographic_argsort(A):
+    ''' Finds indices of sorted rows of the array A '''
+    if A.size > 0 and A.ndim > 2:
+        # using sequence of all elements of remaining axes in lexsort
+        A = A.reshape((len(A), -1))        
+    # transposing and reversing axis 0 to match lexsort expected format
+    return np.lexsort(np.transpose(A)[::-1])
+
+def lexicographic_sort(A):
+    ''' Sorts rows of the array A '''
+    idx = lexicographic_argsort(A)
+    return A[idx]
+
+def lexicographic_compare(a, b):
+    ''' Compares a, b lexicographically '''
+    a, b = a.flatten(), b.flatten()
+    idx = np.nonzero(np.logical_not(np.isclose(a, b)))[0]
+    if len(idx) == 0:
+        return 0  # a == b
+    idx_different = idx[0] # first non-equal position
+    if a[idx_different] < b[idx_different]:
+        return -1 # a < b
+    else:
+        return 1  # a > b
+
 def find_unique_correspondances(A, B, f):
     ''' finds unique members a \in A such that 
         there is b \in B such that f(a) == b '''
-    A_remaining_idx = list(range(len(A)))
-    result_idx = []
-    for b in B:
-        for i in range(len(A_remaining_idx)):
-            a_idx = A_remaining_idx[i] 
-            a = A[a_idx]
-            if np.all(f(a) == b):
-                result_idx.append(a_idx)
-                del A_remaining_idx[i]
-                break
-    return np.array(A)[result_idx]
+    A_orig = A
+    A = np.concatenate([np.expand_dims(f(a), axis=0)
+                        for a in A], axis=0)
+    A_idx, B = lexicographic_argsort(A), lexicographic_sort(B)
+    A, A_orig = A[A_idx], A_orig[A_idx]
+    A_remaining_idx = []    
+    idx_a = idx_b = 0
+    while idx_a < len(A) and idx_b < len(B):
+        while (idx_a < len(A) and idx_b < len(B) and
+               lexicographic_compare(A[idx_a], B[idx_b]) < 0):
+            idx_a += 1
+        while (idx_a < len(A) and idx_b < len(B) and
+               lexicographic_compare(A[idx_a], B[idx_b]) > 0):
+            idx_b += 1
+        while (idx_a < len(A) and idx_b < len(B) and 
+               lexicographic_compare(A[idx_a], B[idx_b]) == 0):
+            A_remaining_idx.append(idx_a)
+            idx_a += 1
+            idx_b += 1
+    return A_orig[A_remaining_idx]
 
 def subtract_sets(A, B):
-    A, B = np.asarray(A), np.asarray(B)
+    A, B = lexicographic_sort(A), lexicographic_sort(B)
     A_remaining_idx = []    
-    B_remaining_idx = list(range(len(B)))
-    for idx_a, a in enumerate(A):
-        found = False
-        for idx_b, b in enumerate(B[B_remaining_idx]):
-            if np.all(a == b):
-                found = True
-                break
-        if found:
-            del B_remaining_idx[idx_b]
-        else:
+    idx_a = idx_b = 0
+    while idx_a < len(A) and idx_b < len(B):
+        while (idx_a < len(A) and idx_b < len(B) and
+               lexicographic_compare(A[idx_a], B[idx_b]) < 0):
             A_remaining_idx.append(idx_a)
+            idx_a += 1
+        while (idx_a < len(A) and idx_b < len(B) and
+               lexicographic_compare(A[idx_a], B[idx_b]) > 0):
+            idx_b += 1
+        while (idx_a < len(A) and idx_b < len(B) and 
+               lexicographic_compare(A[idx_a], B[idx_b]) == 0):
+            idx_a += 1
+            idx_b += 1
+    A_remaining_idx.extend(range(idx_a, len(A)))
     return A[A_remaining_idx]
 
 
@@ -206,26 +246,6 @@ def Grouped_sensitivity(L, B, k, k_CS=2, tau=1/20., k_closest=2, is_perpendicula
     s_lines = [np.sqrt(2) * s[to_tuple(P_all[idx])] 
                for idx, l in enumerate(L)]
     return np.asarray(s_lines), P_all, s, len(P_m)
-
-
-'''
-from collections import Counter
-def Grouped_sensitivity_perpendicular(L, B, k, k_CS=2, tau=1/20., k_closest=2):    
-     Reduces data by ((1 - tau) / (4 * k)) ** m_CS 
-    n, m = len(L), len(L[0]) #  n, m, d * 2
-    p, d = unpack_lines(L)   # n, m, d
-        
-    d_abs = np.abs(d)
-    
-    for j in range(m):
-        d_column = d_abs[:,j,:]
-        counts = Counter(d_column).items()
-        best_key, best_value = counts[0]
-        for key, value in counts:
-            if value > best_value:
-                best_key, best_value = key, value
-    
-'''  
 
     
 def LS_dense(L, k, k_closest=None, is_perpendicular=False):

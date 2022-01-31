@@ -89,8 +89,7 @@ def get_3d_cloud_path():
     fname = fpath + "points3DWithDescriptors_front (4).txt"
     return fname
 
-def generate_colored_points_sets_3d_cloud(n, m, fname=None):
-    assert(m == 1)
+def generate_colored_points_sets_3d_cloud(fname=None):
     if fname is None:
         fname = get_3d_cloud_path()
     data = pd.read_csv(
@@ -103,8 +102,7 @@ def generate_colored_points_sets_3d_cloud(n, m, fname=None):
 
 def read_colors_3d_cloud(fname=None):
     if fname is None:
-        fpath = "/home/ernesto/projects/tracxpoint/sfm_postprocessing/"
-        fname = fpath + "points3DWithDescriptors_front (4).txt"
+        fname = get_3d_cloud_path()
     data = pd.read_csv(
         fname, delimiter="|", usecols=range(4,4+3), 
         header=0, names=["r", "g", "b"])  
@@ -291,7 +289,8 @@ def generate_data_set_of_sets(n, m, data_type):
         Datasets.POINTS_RANDOM : generate_colored_points_sets_synthetic_random,
         Datasets.POINTS_FLOWER : generate_colored_points_sets_synthetic_flower,
         Datasets.POINTS_REUTERS : generate_colored_points_sets_reuters,
-        Datasets.POINTS_CLOUD : generate_colored_points_sets_3d_cloud,
+        Datasets.POINTS_CLOUD : (lambda n, m: 
+                                 generate_colored_points_sets_3d_cloud()),
         Datasets.POINTS_COVTYPE : partial(
             generate_colored_points_from_data,
             fetch_data_f=real_data,
