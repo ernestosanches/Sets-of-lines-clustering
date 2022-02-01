@@ -1,13 +1,13 @@
+import nltk
+import numpy as np
+from itertools import chain
+from matplotlib import pyplot as plt
 from sklearn.datasets import fetch_20newsgroups
 from sklearn.feature_extraction.text import CountVectorizer
 from sklearn.decomposition import TruncatedSVD, PCA
 from sklearn.manifold import TSNE
-from matplotlib import pyplot as plt
-from utils import pack_colored_points
 from sklearn.pipeline import Pipeline
-import numpy as np
-from itertools import chain
-import nltk
+from .utils import pack_colored_points
 
 
 

@@ -2,14 +2,13 @@ import numpy as np
 import pandas as pd
 from time import ctime
 from matplotlib import pyplot as plt
-#from matplotlib.colors import LinearSegmentedColormap
 from matplotlib import cm
-
-from drawing import draw_line_set
-from parameters import Datasets
+from .drawing import draw_line_set
+from .parameters import Datasets
 
 
 def _get_colormap():
+    #from matplotlib.colors import LinearSegmentedColormap
     '''return LinearSegmentedColormap.from_list(
         "custom",
         [(0.0, '#0000ff'), 

@@ -8,7 +8,7 @@ medians of various objects, in spaces with various distance functions.
 
 import numpy as np
 from joblib import Parallel, delayed
-from utils import unpack_colored_points, unpack_lines
+from .utils import unpack_colored_points, unpack_lines
 
 ''' Distance functions '''
 

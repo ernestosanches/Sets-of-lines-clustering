@@ -5,9 +5,9 @@ import numpy as np
 from functools import partial
 from matplotlib import pyplot as plt
 from joblib import Parallel, delayed
-from utils import (pack_colored_points, pack_lines,
+from .utils import (pack_colored_points, pack_lines,
                    unpack_colored_points)
-from median import (
+from .median import (
     robust_median, recursive_robust_median,
     closest_lines, closest_points, dist_points, dist_lines,
     closest_point_sets, dist_colored_points, dist_lines_min_set_to_point,
@@ -16,18 +16,18 @@ from median import (
     dist_colored_points_min_set_to_point, dist_colored_points_min_p_to_set,
     enumerate_set_of_sets, enumerate_set_of_sets_centroids,
     closest_colored_point_sets_to_points)
-from generation import (
+from .generation import (
     generate_points, generate_points_sets, 
     generate_set_of_lines, generate_data_set_of_sets)
-from drawing import (
+from .drawing import (
     draw_points, draw_colored_point_set, draw_colored_point_sets,
     draw_colored_point_sets_all, draw_colored_points, draw_lines,
     draw_lines_from_points, draw_lines_set_of_sets,
     draw_set_of_sets_of_lines, draw_point_set)
-from coresets import (CS_dense, Grouped_sensitivity, LS_dense, 
+from .coresets import (CS_dense, Grouped_sensitivity, LS_dense, 
                       coreset, coreset_sample)
-from kmedians import kmedians, centroids_set_init
-from parameters import Datasets
+from .kmedians import kmedians, centroids_set_init
+from .parameters import Datasets
 
 
 ''' Testing functions for intermediate algorithms '''

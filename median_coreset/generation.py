@@ -1,11 +1,11 @@
 import numpy as np
 import pandas as pd
 from functools import partial
-from utils import unpack_lines, pack_lines, pack_colored_points
 from sklearn.datasets import fetch_kddcup99, fetch_covtype, fetch_california_housing
 from sklearn.preprocessing import scale
-
-from text import load_text_data
+from .utils import unpack_lines, pack_lines, pack_colored_points
+from .text import load_text_data
+from .parameters import Datasets
 
 ''' Helper dataset generation functions '''
 
@@ -280,7 +280,6 @@ def normalize_lines(L):
 ############################################################
 ### Wrapper function to generate a given dataset by name ###
 ############################################################
-from parameters import Datasets
 
 def generate_data_set_of_sets(n, m, data_type):
     real_data = fetch_california_housing #fetch_covtype 

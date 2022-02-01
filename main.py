@@ -1,10 +1,10 @@
 ''' Main function that tests the coreset and plots a graph of 
-    error comparison with random sampling '''
+    error comparison with random sampling. '''
 
 import numpy as np
 from os import mkdir, path
-from tests import run_coreset_set_of_sets
-from parameters import Datasets
+from median_coreset.tests import run_coreset_set_of_sets
+from median_coreset.parameters import Datasets
 
 if __name__ == "__main__":
     if not path.exists("results"):

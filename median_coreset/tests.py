@@ -1,11 +1,11 @@
 import pickle
 import numpy as np
 from time import ctime
-from drawing import plot_graphs
-from parameters import Datasets
-from coresets import coreset_sample
-from visualization import visualize_coreset
-from evaluation import (
+from .drawing import plot_graphs
+from .parameters import Datasets
+from .coresets import coreset_sample
+from .visualization import visualize_coreset
+from .evaluation import (
     test_points_median, test_lines_median, test_lines_closest,
     test_colored_points_median, test_colored_point_sets_to_sets_median,
     test_colored_point_sets_to_points_median, test_cs_dense,

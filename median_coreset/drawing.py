@@ -2,7 +2,7 @@ import numpy as np
 from time import ctime
 from collections.abc import Iterable
 from matplotlib import pyplot as plt
-from utils import unpack_colored_points, unpack_lines
+from .utils import unpack_colored_points, unpack_lines
 
 
 def draw_set_of_sets_of_lines(L_set, s=2, marker='o'):

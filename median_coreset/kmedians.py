@@ -1,10 +1,10 @@
 import numpy as np
 from functools import partial
-from median import (
+from .median import (
     robust_median, dist_points, dist_colored_points_min_set_to_point,
     dist_lines_min_set_to_point, enumerate_set_of_sets,
     enumerate_set_of_sets_centroids)
-from drawing import (
+from .drawing import (
     draw_colored_point_set, draw_colored_point_sets, draw_point_set)
 
 def random_init(P, k):
