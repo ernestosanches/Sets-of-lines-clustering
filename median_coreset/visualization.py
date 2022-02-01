@@ -106,7 +106,7 @@ def visualize_coreset(P, sensitivities, k, data_type, feature_offset=0,
 
 def visualize_coreset_points_3d(P, k, sensitivities, threshold=1, 
                                 data_type=None, feature_offset=0, 
-                                colors=None, mul=1):
+                                colors=None, mul=1, save_figure=True):
     def draw_3d(ax, points, idx, offset, sensitivities, 
                 colors, s, alpha, label):
         c = (np.minimum(sensitivities[idx] * mul, 1) if colors is None 
@@ -141,8 +141,9 @@ def visualize_coreset_points_3d(P, k, sensitivities, threshold=1,
         "{}: ".format(data_type) if data_type is not None else "",
         " and sensitivities" if colors is None else "",
         " * {}".format(mul) if (mul != 1 and colors is None) else ""))
-    plt.savefig("results/sensitivities_3d_n{}_m{}_k{}_{}_{}.png".format(
-        n, m, k, data_type, ctime().replace(':', '-')), dpi=300)
+    if save_figure:
+        plt.savefig("results/sensitivities_3d_n{}_m{}_k{}_{}_{}.png".format(
+            n, m, k, data_type, ctime().replace(':', '-')), dpi=300)
 
 
 def load_colors_rgb(fname):
