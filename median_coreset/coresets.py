@@ -180,14 +180,14 @@ def CS_dense(P, k, m_CS=2, tau=1/20., k_closest=2, is_perpendicular=False):
     
     k_iterations = 1 if is_perpendicular else min(k, 2)
     
-    P_prev = P
+    P_prev = P_prev_prev = P
     delta = tau
     stopCondition = False
     P_prev_size_prev = len(P)
     for r in range(k_iterations):
         if stopCondition:
             break
-        B_prev = []
+        B_prev = B_prev_prev =  []
         #print("r=",r)
         for l in range(m_CS):
             if stopCondition:
@@ -200,6 +200,7 @@ def CS_dense(P, k, m_CS=2, tau=1/20., k_closest=2, is_perpendicular=False):
                 P_prev_hat, [b], (1 - tau) / (1.1 * max(2, k_closest))) # TODO: 2 * k
                 
             f_proj = partial(proj_hat_colored_point, B=B_prev)
+            P_prev_prev = P_prev # saving
             P_prev = find_unique_correspondances(P_prev, P_hat_closest, f_proj) 
             '''
             = np.asarray([
@@ -210,12 +211,17 @@ def CS_dense(P, k, m_CS=2, tau=1/20., k_closest=2, is_perpendicular=False):
             #                     if set_in_setofsets(
             #                             proj_hat_colored_point(P, B_prev), 
             #                             P_hat_closest)])
-            B_prev.append(b)       
+            B_prev.append(b)
+            B_prev_prev = B_prev[:-1]
             stopCondition = ((len(P_prev) <= 1) or 
                              (len(P_prev) == P_prev_size_prev))
             P_prev_size_prev = len(P_prev)
             print("r={}, l={}, P_hat_closest: {}, P_prev: {}".format(
                 r, l, len(P_hat_closest), len(P_prev)))
+    if len(P_prev) == 0:
+        P_prev = P_prev_prev
+        B_prev = B_prev_prev
+        print("Restored: len(P_prev) = {}".format(len(P_prev)))
     return P_prev, np.asarray(B_prev), len(P_prev)
 
 

@@ -316,7 +316,7 @@ def evaluate_lines(L, sensitivities, size, k, n_samples, sample_f, P_queries):
     
     epsilons = Parallel()([
         delayed(evaluate_sample)() for i in range(n_samples)])
-    block_size = n_samples // 5
+    block_size = n_samples // 10
     epsilons = [np.max(epsilons[i:i+block_size]) 
                 for i in range(0, len(epsilons), block_size)]
     return epsilons, np.mean(epsilons), np.std(epsilons)
@@ -385,7 +385,7 @@ def evaluate_colored_points(L, sensitivities, size, k, n_samples, sample_f,
             epsilon = 0
         epsilons.append(epsilon)
     # mean of maximums evaluation
-    block_size = n_samples // 5
+    block_size = n_samples // 10
     epsilons = [np.max(epsilons[i:i+block_size]) 
                 for i in range(0, len(epsilons), block_size)]
     return epsilons, np.mean(epsilons), np.std(epsilons)
